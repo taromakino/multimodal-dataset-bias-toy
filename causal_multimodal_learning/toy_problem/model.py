@@ -1,7 +1,7 @@
 import pytorch_lightning as pl
 import torch
 import torch.nn as nn
-from framework import gaussian_nll, posterior_kld, swish
+from utils.framework import gaussian_nll, posterior_kld, swish
 from torch.optim import Adam
 
 class ScalarEncoder(nn.Module):

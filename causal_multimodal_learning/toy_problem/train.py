@@ -1,13 +1,14 @@
+import pytorch_lightning as pl
 from argparse import ArgumentParser
-from framework import *
+from utils.framework import make_trainer
 from toy_problem.data import make_data
 from toy_problem.model import SemiSupervisedVae
 
 def main(args):
     pl.seed_everything(args.seed)
+    model = SemiSupervisedVae(args.lr, args.data_dim, args.hidden_dim, args.latent_dim)
     data_train, data_val, data_test = make_data(args.seed, args.n_examples, args.data_dim, args.u_mult,
         args.trainval_ratios, args.batch_size)
-    model = SemiSupervisedVae(args.lr, args.data_dim, args.hidden_dim, args.latent_dim)
     trainer = make_trainer(args.name, args.seed, args.n_epochs, args.patience)
     trainer.fit(model, data_train, data_val)
     trainer.test(model, data_test)
