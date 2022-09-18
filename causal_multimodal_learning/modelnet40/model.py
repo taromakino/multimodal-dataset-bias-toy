@@ -27,8 +27,8 @@ class Encoder(nn.Module):
 class Decoder(nn.Module):
     def __init__(self, clip_name, latent_dim):
         super(Decoder, self).__init__()
-        self.x0_clip, _ = clip.load(clip_name).float()
-        self.x1_clip, _ = clip.load(clip_name).float()
+        self.x0_clip, _ = clip.load(clip_name)
+        self.x1_clip, _ = clip.load(clip_name)
         self.fc_y = nn.Linear(2 * CLIP_DIM[clip_name] + latent_dim, 40)
 
     def forward(self, x0, x1, z):
