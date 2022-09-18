@@ -19,21 +19,21 @@ class Encoder(nn.Module):
         self.fc_var = nn.Linear(2 * CLIP_DIM[clip_name] + 1, latent_dim)
 
     def forward(self, x0, x1, y):
-        x0 = self.x0_clip.encode_image(x0)
-        x1 = self.x1_clip.encode_image(x1)
+        x0 = self.x0_clip.encode_image(x0).float()
+        x1 = self.x1_clip.encode_image(x1).float()
         merged = torch.cat((x0, x1, y[:, None]), dim=1)
         return self.fc_mu(merged), self.fc_var(merged)
 
 class Decoder(nn.Module):
     def __init__(self, clip_name, latent_dim):
         super(Decoder, self).__init__()
-        self.x0_clip, _ = clip.load(clip_name)
-        self.x1_clip, _ = clip.load(clip_name)
+        self.x0_clip, _ = clip.load(clip_name).float()
+        self.x1_clip, _ = clip.load(clip_name).float()
         self.fc_y = nn.Linear(2 * CLIP_DIM[clip_name] + latent_dim, 40)
 
     def forward(self, x0, x1, z):
-        x0 = self.x0_clip.encode_image(x0)
-        x1 = self.x1_clip.encode_image(x1)
+        x0 = self.x0_clip.encode_image(x0).float()
+        x1 = self.x1_clip.encode_image(x1).float()
         return self.fc_y(torch.cat((x0, x1, z), dim=1))
 
 class SemiSupervisedVae(pl.LightningModule):
