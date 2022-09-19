@@ -61,6 +61,7 @@ class SemiSupervisedVae(pl.LightningModule):
 
     def training_step(self, batch, batch_idx):
         loss = self.loss(*batch)
+        self.log("train_loss", loss)
         return loss
 
     def validation_step(self, batch, batch_idx):
