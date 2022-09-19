@@ -27,9 +27,10 @@ def posterior_kld(mu, logvar):
 
 def make_trainer(name, seed, n_epochs, patience):
     return pl.Trainer(
-        accelerator="gpu" if torch.cuda.is_available() else "cpu",
         logger=CSVLogger("log", name, version=seed),
-        max_epochs=n_epochs,
         callbacks=[
             ModelCheckpoint(monitor="val_loss"),
-            EarlyStopping(monitor="val_loss", patience=patience)])
+            EarlyStopping(monitor="val_loss", patience=patience)],
+        max_epochs=n_epochs,
+        log_every_n_steps=1,
+        accelerator="gpu" if torch.cuda.is_available() else "cpu")
