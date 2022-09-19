@@ -8,7 +8,7 @@ from torch.optim import Adam
 
 CLIP_DIM = {
     "RN50": 1024,
-    "ViT-B/16" : 512}
+    "ViT-B/32" : 512}
 
 class Encoder(nn.Module):
     def __init__(self, clip_name, latent_dim):
@@ -19,8 +19,8 @@ class Encoder(nn.Module):
         self.fc_var = nn.Linear(2 * CLIP_DIM[clip_name] + 1, latent_dim)
 
     def forward(self, x0, x1, y):
-        x0 = self.x0_clip.encode_image(x0).float()
-        x1 = self.x1_clip.encode_image(x1).float()
+        x0 = self.x0_clip.encode_image(x0)
+        x1 = self.x1_clip.encode_image(x1)
         merged = torch.cat((x0, x1, y[:, None]), dim=1)
         return self.fc_mu(merged), self.fc_var(merged)
 
@@ -32,8 +32,8 @@ class Decoder(nn.Module):
         self.fc_y = nn.Linear(2 * CLIP_DIM[clip_name] + latent_dim, 40)
 
     def forward(self, x0, x1, z):
-        x0 = self.x0_clip.encode_image(x0).float()
-        x1 = self.x1_clip.encode_image(x1).float()
+        x0 = self.x0_clip.encode_image(x0)
+        x1 = self.x1_clip.encode_image(x1)
         return self.fc_y(torch.cat((x0, x1, z), dim=1))
 
 class SemiSupervisedVae(pl.LightningModule):
