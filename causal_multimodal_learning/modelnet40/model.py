@@ -52,25 +52,30 @@ class SemiSupervisedVae(pl.LightningModule):
             return mu
 
     def loss(self, x0, x1, y):
+        assert not x0.isnan().any()
+        assert not x1.isnan().any()
+        assert not y.isnan().any()
         mu, logvar = self.encoder(x0, x1, y)
         z = self.sample_z(mu, logvar)
         y_reconst = self.decoder(x0, x1, z)
         reconst_loss = F.cross_entropy(y_reconst, y, reduction="none")
         kld_loss = posterior_kld(mu, logvar)
+        self.log("reconst_loss", reconst_loss.mean())
+        self.log("kld_loss", kld_loss.mean())
         return (reconst_loss + kld_loss).mean()
 
     def training_step(self, batch, batch_idx):
         loss = self.loss(*batch)
-        self.log("train_loss", loss)
+        # self.log("train_loss", loss)
         return loss
 
     def validation_step(self, batch, batch_idx):
         loss = self.loss(*batch)
-        self.log("val_loss", loss, on_step=False, on_epoch=True)
+        # self.log("val_loss", loss, on_step=False, on_epoch=True)
 
     def test_step(self, batch, batch_idx):
         loss = self.loss(*batch)
-        self.log("test_loss", loss, on_step=False, on_epoch=True)
+        # self.log("test_loss", loss, on_step=False, on_epoch=True)
 
     def configure_optimizers(self):
         return Adam(self.parameters(), self.lr)
