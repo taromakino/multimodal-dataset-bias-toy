@@ -19,11 +19,22 @@ FRONT_VIEW_IDX = 0
 REAR_VIEW_IDX = 6
 
 class ModelNet40Dataset(Dataset):
-    def __init__(self, stage, clip_transforms):
+    def __init__(self, stage):
         self.series = load_file(os.path.join(DPATH, f"{stage}_series.pkl"))
-        self.transform = transforms.Compose([
-            transforms.ToPILImage(),
-            clip_transforms])
+        if stage == "test":
+            self.transform = transforms.Compose([
+                transforms.ToTensor(),
+                transforms.Normalize(
+                    mean=[0.485, 0.456, 0.406],
+                    std=[0.229, 0.224, 0.225])])
+        else:
+            self.transform = transforms.Compose([
+                transforms.ToPILImage(),
+                transforms.RandomHorizontalFlip(),
+                transforms.ToTensor(),
+                transforms.Normalize(
+                    mean=[0.485, 0.456, 0.406],
+                    std=[0.229, 0.224, 0.225])])
 
     def __len__(self):
         return len(self.series)
@@ -73,11 +84,9 @@ def make_data_dfs(train_ratio):
     save_file(to_series(pd.DataFrame(val_df)), os.path.join(DPATH, "val_series.pkl"))
     save_file(to_series(pd.DataFrame(test_df)), os.path.join(DPATH, "test_series.pkl"))
 
-def make_data(batch_size, n_workers, clip_transforms):
-    train_data = DataLoader(ModelNet40Dataset("train", clip_transforms), shuffle=True, batch_size=batch_size,
-        num_workers=n_workers, pin_memory=True)
-    val_data = DataLoader(ModelNet40Dataset("val", clip_transforms), batch_size=batch_size, num_workers=n_workers,
+def make_data(batch_size, n_workers):
+    train_data = DataLoader(ModelNet40Dataset("train"), shuffle=True, batch_size=batch_size, num_workers=n_workers,
         pin_memory=True)
-    test_data = DataLoader(ModelNet40Dataset("test", clip_transforms), batch_size=batch_size, num_workers=n_workers,
-        pin_memory=True)
+    val_data = DataLoader(ModelNet40Dataset("val"), batch_size=batch_size, num_workers=n_workers, pin_memory=True)
+    test_data = DataLoader(ModelNet40Dataset("test"), batch_size=batch_size, num_workers=n_workers, pin_memory=True)
     return train_data, val_data, test_data

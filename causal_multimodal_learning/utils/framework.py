@@ -32,5 +32,4 @@ def make_trainer(name, seed, n_epochs, patience):
             ModelCheckpoint(monitor="val_loss"),
             EarlyStopping(monitor="val_loss", patience=patience)],
         max_epochs=n_epochs,
-        log_every_n_steps=1,
         accelerator="gpu" if torch.cuda.is_available() else "cpu")
