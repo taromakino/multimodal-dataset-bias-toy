@@ -7,7 +7,7 @@ from torch import nn
 from torch.optim import Adam
 
 def make_resnet_encoder():
-    model = torchvision.models.resnet18(pretrained=True)
+    model = torchvision.models.resnet50(pretrained=True)
     model.fc = nn.Identity(model.fc.out_features)
     return model
 
@@ -16,8 +16,8 @@ class Encoder(nn.Module):
         super(Encoder, self).__init__()
         self.x0_encoder = make_resnet_encoder()
         self.x1_encoder = make_resnet_encoder()
-        self.fc_mu = nn.Linear(2 * 512 + 1, latent_dim)
-        self.fc_var = nn.Linear(2 * 512 + 1, latent_dim)
+        self.fc_mu = nn.Linear(2 * 2048 + 1, latent_dim)
+        self.fc_var = nn.Linear(2 * 2048 + 1, latent_dim)
 
     def forward(self, x0, x1, y):
         x0 = self.x0_encoder(x0)
@@ -30,7 +30,7 @@ class Decoder(nn.Module):
         super(Decoder, self).__init__()
         self.x0_encoder = make_resnet_encoder()
         self.x1_encoder = make_resnet_encoder()
-        self.fc_y = nn.Linear(2 * 512 + latent_dim, 40)
+        self.fc_y = nn.Linear(2 * 2048 + latent_dim, 40)
 
     def forward(self, x0, x1, z):
         x0 = self.x0_encoder(x0)
