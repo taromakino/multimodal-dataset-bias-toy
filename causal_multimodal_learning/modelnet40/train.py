@@ -8,7 +8,7 @@ def main(args):
     pl.seed_everything(args.seed)
     model = SemiSupervisedVae(args.lr, args.latent_dim)
     data_train, data_val, data_test = make_data(args.batch_size, args.n_workers)
-    trainer = make_trainer(args.name, args.seed, args.n_epochs, args.patience)
+    trainer = make_trainer(args.name, f"lr={args.lr},s={args.seed}", args.n_epochs, args.patience)
     trainer.fit(model, data_train, data_val)
     trainer.test(model, data_test)
 
