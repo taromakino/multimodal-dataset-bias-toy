@@ -37,9 +37,9 @@ def gaussian_kld(mu_p, logvar_p, mu_q, logvar_q):
 def posterior_kld(mu, logvar):
     return -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp(), dim=1)
 
-def make_trainer(dpath, n_epochs, patience):
+def make_trainer(dpath, seed, n_epochs, patience):
     return pl.Trainer(
-        logger=CSVLogger(dpath),
+        logger=CSVLogger(dpath, name=None, version=seed),
         callbacks=[
             ModelCheckpoint(monitor="val_loss"),
             EarlyStopping(monitor="val_loss", patience=patience)],
