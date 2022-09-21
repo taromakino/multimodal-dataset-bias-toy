@@ -26,8 +26,9 @@ def to_torch(*arrs):
     else:
         return result
 
-def make_dataloader(data_tuple, batch_size, is_train):
-    return DataLoader(TensorDataset(*data_tuple), batch_size=batch_size, shuffle=is_train)
+def make_dataloader(data_tuple, batch_size, is_train, n_workers):
+    return DataLoader(TensorDataset(*data_tuple), shuffle=is_train, batch_size=batch_size, num_workers=n_workers,
+        pin_memory=True)
 
 def make_dataset(seed, n_examples, data_dim, u_mult):
     rng = np.random.RandomState(seed)
@@ -47,7 +48,7 @@ def make_dataset(seed, n_examples, data_dim, u_mult):
     y = x0 + x1 + y_noise
     return x0, x1, y
 
-def make_data(seed, n_examples, data_dim, u_mult, trainval_ratios, batch_size):
+def make_data(seed, n_examples, data_dim, u_mult, trainval_ratios, batch_size, n_workers):
     x0, x1, y = make_dataset(seed, n_examples, data_dim, u_mult)
     (x0_train, x1_train, y_train), (x0_val, x1_val, y_val), (x0_test, x1_test, y_test) = \
         split_data(trainval_ratios, x0, x1, y)
@@ -60,7 +61,7 @@ def make_data(seed, n_examples, data_dim, u_mult, trainval_ratios, batch_size):
     x0_test, x1_test = to_torch(x0_test, x1_test)
     y_train, y_val, y_test = to_torch(y_train, y_val, y_test)
 
-    data_train = make_dataloader((x0_train, x1_train, y_train), batch_size, True)
-    data_val = make_dataloader((x0_val, x1_val, y_val), batch_size, False)
-    data_test = make_dataloader((x0_test, x1_test, y_test), batch_size, False)
+    data_train = make_dataloader((x0_train, x1_train, y_train), batch_size, True, n_workers)
+    data_val = make_dataloader((x0_val, x1_val, y_val), batch_size, False, n_workers)
+    data_test = make_dataloader((x0_test, x1_test, y_test), batch_size, False, n_workers)
     return data_train, data_val, data_test
