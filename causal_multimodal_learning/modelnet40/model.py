@@ -88,6 +88,7 @@ class SemiSupervisedVae(pl.LightningModule):
     def validation_step(self, batch, batch_idx):
         reconst_loss, posterior_kld_loss, gaussian_kld_loss = self.loss(*batch)
         self.log("val_posterior_kld_loss", posterior_kld_loss.mean(), on_step=False, on_epoch=True)
+        self.log("val_gaussian_kld_loss", gaussian_kld_loss.mean(), on_step=False, on_epoch=True)
         self.log("val_loss", (reconst_loss + posterior_kld_loss).mean(), on_step=False, on_epoch=True)
 
     def test_step(self, batch, batch_idx):
