@@ -9,13 +9,13 @@ def main(args):
     model = SemiSupervisedVae(args.lr, args.data_dim, args.hidden_dim, args.latent_dim, args.alpha)
     data_train, data_val, data_test = make_data(args.seed, args.n_examples, args.data_dim, args.u_mult,
         args.trainval_ratios, args.batch_size)
-    trainer = make_trainer(args.name, args.seed, args.n_epochs, args.patience)
+    trainer = make_trainer(args.dpath, args.seed, args.n_epochs, args.patience)
     trainer.fit(model, data_train, data_val)
     trainer.test(model, data_test)
 
 if __name__ == "__main__":
     parser = ArgumentParser()
-    parser.add_argument("--name", type=str, default="toy_problem")
+    parser.add_argument("--dpath", type=str, default="results")
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--n_examples", type=int, default=10000)
     parser.add_argument("--data_dim", type=int, default=1)
