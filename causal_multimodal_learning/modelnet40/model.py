@@ -11,9 +11,9 @@ def make_resnet_encoder():
     model.fc = nn.Identity(model.fc.out_features)
     return model
 
-class Encoder(nn.Module):
+class InputEncoder(nn.Module):
     def __init__(self, latent_dim):
-        super(Encoder, self).__init__()
+        super().__init__()
         self.encoder_x0 = make_resnet_encoder()
         self.encoder_x1 = make_resnet_encoder()
         self.fc_mu = nn.Linear(2 * 2048, latent_dim)
@@ -25,9 +25,9 @@ class Encoder(nn.Module):
         merged = torch.cat((x0, x1), dim=1)
         return self.fc_mu(merged), self.fc_var(merged)
 
-class SemiSupervisedEncoder(nn.Module):
+class InputTargetEncoder(nn.Module):
     def __init__(self, latent_dim):
-        super(SemiSupervisedEncoder, self).__init__()
+        super().__init__()
         self.encoder_x0 = make_resnet_encoder()
         self.encoder_x1 = make_resnet_encoder()
         self.fc_mu = nn.Linear(2 * 2048 + 1, latent_dim)
@@ -41,7 +41,7 @@ class SemiSupervisedEncoder(nn.Module):
 
 class Decoder(nn.Module):
     def __init__(self, latent_dim):
-        super(Decoder, self).__init__()
+        super().__init__()
         self.encoder_x0 = make_resnet_encoder()
         self.encoder_x1 = make_resnet_encoder()
         self.fc_y = nn.Linear(2 * 2048 + latent_dim, 40)
@@ -56,8 +56,8 @@ class SemiSupervisedVae(pl.LightningModule):
         super().__init__()
         self.lr = lr
         self.alpha = alpha
-        self.encoder_ss = SemiSupervisedEncoder(latent_dim)
-        self.encoder = Encoder(latent_dim)
+        self.input_target_encoder = InputTargetEncoder(latent_dim)
+        self.input_encoder = InputEncoder(latent_dim)
         self.decoder = Decoder(latent_dim)
 
     def sample_z(self, mu, logvar):
@@ -70,14 +70,15 @@ class SemiSupervisedVae(pl.LightningModule):
 
     def loss(self, x0, x1, y):
         # Vanilla VAE loss
-        mu_ss, logvar_ss = self.encoder_ss(x0, x1, y)
-        z_ss = self.sample_z(mu_ss, logvar_ss)
-        y_reconst = self.decoder(x0, x1, z_ss)
+        mu_input_target, logvar_input_target = self.input_target_encoder(x0, x1, y)
+        z = self.sample_z(mu_input_target, logvar_input_target)
+        y_reconst = self.decoder(x0, x1, z)
         reconst_loss = F.cross_entropy(y_reconst, y, reduction="none")
-        posterior_kld_loss = posterior_kld(mu_ss, logvar_ss)
+        posterior_kld_loss = posterior_kld(mu_input_target, logvar_input_target)
         # KL(q(z | x, x', y) || q(z | x, x')), don't backprop through q(z | x, x', y)
-        mu, logvar = self.encoder(x0, x1)
-        gaussian_kld_loss = gaussian_kld(mu_ss.clone().detach(), logvar_ss.clone().detach(), mu, logvar)
+        mu_input, logvar_input = self.input_encoder(x0, x1)
+        gaussian_kld_loss = gaussian_kld(mu_input_target.clone().detach(), logvar_input_target.clone().detach(),
+            mu_input, logvar_input)
         return reconst_loss, posterior_kld_loss, gaussian_kld_loss
 
     def training_step(self, batch, batch_idx):
