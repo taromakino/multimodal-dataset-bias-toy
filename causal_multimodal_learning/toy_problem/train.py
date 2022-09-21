@@ -6,7 +6,7 @@ from toy_problem.model import SemiSupervisedVae
 
 def main(args):
     pl.seed_everything(args.seed)
-    model = SemiSupervisedVae(args.lr, args.data_dim, args.hidden_dim, args.latent_dim)
+    model = SemiSupervisedVae(args.lr, args.data_dim, args.hidden_dim, args.latent_dim, args.alpha)
     data_train, data_val, data_test = make_data(args.seed, args.n_examples, args.data_dim, args.u_mult,
         args.trainval_ratios, args.batch_size)
     trainer = make_trainer(args.name, args.seed, args.n_epochs, args.patience)
@@ -27,4 +27,5 @@ if __name__ == "__main__":
     parser.add_argument("--batch_size", type=int, default=100)
     parser.add_argument("--hidden_dim", type=int, default=100)
     parser.add_argument("--latent_dim", type=int, default=100)
+    parser.add_argument("--alpha", type=float, default=0)
     main(parser.parse_args())
