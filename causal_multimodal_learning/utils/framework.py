@@ -15,24 +15,27 @@ class Swish(nn.Module):
 def swish(x):
     return x * torch.sigmoid(x)
 
-def gaussian_nll(x, mu, logvar):
-    if x.shape[1] == 1:
-        dist = Normal(loc=mu, scale=torch.sqrt(torch.exp(logvar)))
+def make_gaussian(mu, logvar):
+    '''
+    The inputs must have shape (batch_size, dim). If we were to pass in a 1D array, it's ambiguous whether to return a
+    batch of univariate Gaussians, or a single multivariate Gaussian.
+    '''
+    batch_size, dim = mu.shape
+    if dim == 1:
+        dist = Normal(loc=mu, scale=torch.exp(logvar / 2))
     else:
         cov_mat = torch.diag_embed(torch.exp(logvar), offset=0, dim1=-2, dim2=-1)
         dist = MultivariateNormal(loc=mu, covariance_matrix=cov_mat)
+    return dist
+
+def gaussian_nll(x, mu, logvar):
+    dist = make_gaussian(mu, logvar)
     return -dist.log_prob(x)
 
 def gaussian_kld(mu_p, logvar_p, mu_q, logvar_q):
-    if mu_p.shape[1] == 1:
-        dist_p = Normal(loc=mu_p, scale=torch.sqrt(torch.exp(logvar_p)))
-        dist_q = Normal(loc=mu_q, scale=torch.sqrt(torch.exp(logvar_q)))
-    else:
-        cov_mat_p = torch.diag_embed(torch.exp(logvar_p), offset=0, dim1=-2, dim2=-1)
-        cov_mat_q = torch.diag_embed(torch.exp(logvar_q), offset=0, dim1=-2, dim2=-1)
-        dist_p = MultivariateNormal(loc=mu_p, covariance_matrix=cov_mat_p)
-        dist_q = MultivariateNormal(loc=mu_q, covariance_matrix=cov_mat_q)
-    return torch.distributions.kl_divergence(dist_p, dist_q)
+    p = make_gaussian(mu_p, logvar_p)
+    q = make_gaussian(mu_q, logvar_q)
+    return torch.distributions.kl_divergence(p, q)
 
 def posterior_kld(mu, logvar):
     return -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp(), dim=1)

@@ -28,7 +28,7 @@ def to_torch(*arrs):
 
 def make_dataloader(data_tuple, batch_size, is_train, n_workers):
     return DataLoader(TensorDataset(*data_tuple), shuffle=is_train, batch_size=batch_size, num_workers=n_workers,
-        pin_memory=True)
+        pin_memory=True, persistent_workers=True)
 
 def make_dataset(seed, n_examples, data_dim, u_mult):
     rng = np.random.RandomState(seed)

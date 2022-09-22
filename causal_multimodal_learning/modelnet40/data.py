@@ -86,7 +86,9 @@ def make_data_dfs(train_ratio):
 
 def make_data(batch_size, n_workers):
     train_data = DataLoader(ModelNet40Dataset("train"), shuffle=True, batch_size=batch_size, num_workers=n_workers,
-        pin_memory=True)
-    val_data = DataLoader(ModelNet40Dataset("val"), batch_size=batch_size, num_workers=n_workers, pin_memory=True)
-    test_data = DataLoader(ModelNet40Dataset("test"), batch_size=batch_size, num_workers=n_workers, pin_memory=True)
+        pin_memory=True, persistent_workers=True)
+    val_data = DataLoader(ModelNet40Dataset("val"), batch_size=batch_size, num_workers=n_workers, pin_memory=True,
+        persistent_workers=True)
+    test_data = DataLoader(ModelNet40Dataset("test"), batch_size=batch_size, num_workers=n_workers, pin_memory=True,
+        persistent_workers=True)
     return train_data, val_data, test_data
