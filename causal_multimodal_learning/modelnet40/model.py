@@ -54,6 +54,7 @@ class Decoder(nn.Module):
 class SemiSupervisedVae(pl.LightningModule):
     def __init__(self, lr, latent_dim, alpha):
         super().__init__()
+        self.save_hyperparameters()
         self.lr = lr
         self.alpha = alpha
         self.input_target_encoder = InputTargetEncoder(latent_dim)
