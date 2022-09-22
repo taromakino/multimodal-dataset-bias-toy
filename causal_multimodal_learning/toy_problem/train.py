@@ -11,7 +11,7 @@ def main(args):
     pl.seed_everything(args.seed)
     model = SemiSupervisedVae(args.lr, args.data_dim, args.hidden_dim, args.latent_dim, args.alpha)
     data_train, data_val, data_test = make_data(args.seed, args.n_examples, args.data_dim, args.u_mult,
-        args.trainval_ratios, args.batch_size, args.n_workers)
+        args.trainval_ratios, args.batch_size)
     trainer = make_trainer(args.dpath, args.seed, args.n_epochs, args.patience)
     trainer.fit(model, data_train, data_val)
     trainer.test(model, data_test)
@@ -28,7 +28,6 @@ if __name__ == "__main__":
     parser.add_argument("--n_epochs", type=int, default=200)
     parser.add_argument("--patience", type=int, default=20)
     parser.add_argument("--batch_size", type=int, default=100)
-    parser.add_argument("--n_workers", type=int, default=20)
     parser.add_argument("--hidden_dim", type=int, default=100)
     parser.add_argument("--latent_dim", type=int, default=100)
     parser.add_argument("--alpha", type=float, default=0)
