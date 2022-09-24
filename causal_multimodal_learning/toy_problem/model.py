@@ -75,19 +75,20 @@ class PosteriorX(pl.LightningModule):
         z = posterior_xy_dist.sample((self.n_samples,))
         posterior_xy_logp = posterior_xy_dist.log_prob(z)
         posterior_x_logp = self.posterior_x(x0, x1, z)
-        return (posterior_xy_logp.detach() - posterior_x_logp).mean(dim=0)
+        return (posterior_xy_logp.detach() - posterior_x_logp).mean()
 
     def training_step(self, batch, batch_idx):
         loss = self.loss(*batch)
+        self.log("train_loss", loss, on_step=False, on_epoch=True)
         return loss.mean()
 
     def validation_step(self, batch, batch_idx):
         loss = self.loss(*batch)
-        self.log("val_loss", loss.mean(), on_step=False, on_epoch=True)
+        self.log("val_loss", loss, on_step=False, on_epoch=True)
 
     def test_step(self, batch, batch_idx):
         loss = self.loss(*batch)
-        self.log("test_loss", loss.mean(), on_step=False, on_epoch=True)
+        self.log("test_loss", loss, on_step=False, on_epoch=True)
 
     def configure_optimizers(self):
         return Adam(self.posterior_x.parameters(), lr=self.lr)
