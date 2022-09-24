@@ -8,19 +8,13 @@ from pytorch_lightning.callbacks import ModelCheckpoint
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from pytorch_lightning.loggers import CSVLogger
 
-class Swish(nn.Module):
-    def forward(self, x):
-        return swish(x)
-
-def swish(x):
-    return x * torch.sigmoid(x)
-
 def make_gaussian(mu, logvar):
     '''
     The inputs must have shape (batch_size, dim). If we were to pass in a 1D array, it's ambiguous whether to return a
     batch of univariate Gaussians, or a single multivariate Gaussian.
     '''
     batch_size, dim = mu.shape
+    mu, logvar = mu.squeeze(), logvar.squeeze()
     if dim == 1:
         dist = Normal(loc=mu, scale=torch.exp(logvar / 2))
     else:
@@ -30,14 +24,14 @@ def make_gaussian(mu, logvar):
 
 def gaussian_nll(x, mu, logvar):
     dist = make_gaussian(mu, logvar)
-    return -dist.log_prob(x)
+    return -dist.log_prob(x.squeeze())
 
 def gaussian_kld(mu_p, logvar_p, mu_q, logvar_q):
     p = make_gaussian(mu_p, logvar_p)
     q = make_gaussian(mu_q, logvar_q)
     return torch.distributions.kl_divergence(p, q)
 
-def posterior_kld(mu, logvar):
+def prior_kld(mu, logvar):
     return -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp(), dim=1)
 
 def make_trainer(dpath, seed, n_epochs, patience):

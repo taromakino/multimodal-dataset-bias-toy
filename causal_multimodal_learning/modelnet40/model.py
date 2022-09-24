@@ -2,11 +2,11 @@ import torch
 import torch.nn.functional as F
 import pytorch_lightning as pl
 import torchvision
-from utils.framework import gaussian_kld, posterior_kld
+from utils.framework import gaussian_kld, prior_kld
 from torch import nn
 from torch.optim import Adam
 
-def make_resnet_encoder():
+def make_resnet_encoder(): # Replace with pl version
     model = torchvision.models.resnet50(pretrained=True)
     model.fc = nn.Identity(model.fc.out_features)
     return model
@@ -75,7 +75,7 @@ class SemiSupervisedVae(pl.LightningModule):
         z = self.sample_z(mu_input_target, logvar_input_target)
         y_reconst = self.decoder(x0, x1, z)
         reconst_loss = F.cross_entropy(y_reconst, y, reduction="none")
-        posterior_kld_loss = posterior_kld(mu_input_target, logvar_input_target)
+        posterior_kld_loss = prior_kld(mu_input_target, logvar_input_target)
         # KL(q(z | x, x', y) || q(z | x, x')), don't backprop through q(z | x, x', y)
         mu_input, logvar_input = self.input_encoder(x0, x1)
         gaussian_kld_loss = gaussian_kld(mu_input_target.clone().detach(), logvar_input_target.clone().detach(),
