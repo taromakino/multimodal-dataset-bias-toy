@@ -43,52 +43,39 @@ class Decoder(nn.Module):
         out = F.silu(self.fc2(out))
         return self.fc3(out)
 
-class MixtureOfGaussians(nn.Module):
-    def __init__(self, data_dim, hidden_dim, latent_dim, n_components):
-        super().__init__()
-        self.prior = torch.nn.Parameter(torch.randn(n_components)[None, None, :]) # Broadcast over sample and batch dims
-        self.encoders = nn.ModuleList()
-        for _ in range(n_components):
-            self.encoders.append(EncoderX(data_dim, hidden_dim, latent_dim))
-
-    def forward(self, x0, x1, z):
-        gaussian_logp = []
-        for encoder in self.encoders:
-            mu, logvar = encoder(x0, x1)
-            gaussian_logp.append(-gaussian_nll(z, mu, logvar))
-        gaussian_logp = torch.stack(gaussian_logp, dim=-1)
-        prior_logp = F.log_softmax(self.prior, dim=-1)
-        return torch.logsumexp(gaussian_logp + prior_logp, -1)
-
 class PosteriorX(pl.LightningModule):
-    def __init__(self, lr, posterior_xy, data_dim, hidden_dim, latent_dim, n_components, n_samples):
+    def __init__(self, lr, posterior_xy, data_dim, hidden_dim, latent_dim):
         super().__init__()
         self.save_hyperparameters(ignore=["posterior_xy"])
         self.lr = lr
-        self.n_samples = n_samples
         self.posterior_xy = posterior_xy
-        self.posterior_x = MixtureOfGaussians(data_dim, hidden_dim, latent_dim, n_components)
+        self.posterior_x = EncoderX(data_dim, hidden_dim, latent_dim)
+
+    def set_posterior_xy(self, posterior_xy):
+        self.posterior_xy = posterior_xy
 
     def loss(self, x0, x1, y):
         mu_xy, logvar_xy = self.posterior_xy(x0, x1, y)
-        posterior_xy_dist = make_gaussian(mu_xy, logvar_xy)
-        z = posterior_xy_dist.sample((self.n_samples,))
-        posterior_xy_logp = posterior_xy_dist.log_prob(z)
-        posterior_x_logp = self.posterior_x(x0, x1, z)
-        return (posterior_xy_logp.detach() - posterior_x_logp).mean()
+        posterior_xy_dist = make_gaussian(mu_xy.clone().detach(), logvar_xy.clone().detach())
+        mu_x, logvar_x = self.posterior_x(x0, x1)
+        posterior_x_dist = make_gaussian(mu_x, logvar_x)
+        loss = torch.distributions.kl_divergence(posterior_xy_dist, posterior_x_dist).mean()
+        kld = prior_kld(mu_x, logvar_x).mean()
+        return loss, kld
 
     def training_step(self, batch, batch_idx):
-        loss = self.loss(*batch)
-        self.log("train_loss", loss, on_step=False, on_epoch=True)
-        return loss.mean()
+        loss, kld = self.loss(*batch)
+        return loss
 
     def validation_step(self, batch, batch_idx):
-        loss = self.loss(*batch)
+        loss, kld = self.loss(*batch)
         self.log("val_loss", loss, on_step=False, on_epoch=True)
+        self.log("val_kld", kld, on_step=False, on_epoch=True)
 
     def test_step(self, batch, batch_idx):
-        loss = self.loss(*batch)
+        loss, kld = self.loss(*batch)
         self.log("test_loss", loss, on_step=False, on_epoch=True)
+        self.log("test_kld", kld, on_step=False, on_epoch=True)
 
     def configure_optimizers(self):
         return Adam(self.posterior_x.parameters(), lr=self.lr)
