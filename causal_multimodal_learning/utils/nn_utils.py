@@ -32,6 +32,9 @@ class MLP(nn.Module):
         else:
             return self.output_layers(x)
 
+def device():
+    return torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 def make_trainer(dpath, seed, n_epochs, patience):
     return pl.Trainer(
         logger=CSVLogger(dpath, name=None, version=seed),

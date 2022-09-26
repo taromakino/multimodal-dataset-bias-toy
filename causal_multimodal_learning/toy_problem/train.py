@@ -13,9 +13,9 @@ def main(args):
     data_train, data_val, data_test = make_data(seed, args.n_examples, args.data_dim, args.u_mult, args.trainval_ratios,
         args.batch_size)
     vae = SemiSupervisedVae(args.data_dim, args.hidden_dims, args.latent_dim, args.lr_vae)
-    vae_trainer = make_trainer(os.path.join(args.dpath, "vae"), seed, args.n_epochs, args.patience)
-    vae_trainer.fit(vae, data_train, data_val)
-    vae_trainer.test(vae, data_test)
+    # vae_trainer = make_trainer(os.path.join(args.dpath, "vae"), seed, args.n_epochs, args.patience)
+    # vae_trainer.fit(vae, data_train, data_val)
+    # vae_trainer.test(vae, data_test)
     posterior_x = PosteriorX(args.data_dim, args.hidden_dims, args.latent_dim, args.lr_posterior_x, args.batch_size,
         args.n_components, args.n_samples)
     posterior_x.posterior_xy.load_state_dict(vae.encoder.state_dict())
