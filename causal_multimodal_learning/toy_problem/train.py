@@ -12,11 +12,12 @@ def main(args):
     pl.seed_everything(seed)
     data_train, data_val, data_test = make_data(seed, args.n_examples, args.data_dim, args.u_mult, args.trainval_ratios,
         args.batch_size)
-    vae = SemiSupervisedVae(args.lr_vae, args.data_dim, args.hidden_dims, args.latent_dim)
+    vae = SemiSupervisedVae(args.data_dim, args.hidden_dims, args.latent_dim, args.lr_vae)
     vae_trainer = make_trainer(os.path.join(args.dpath, "vae"), seed, args.n_epochs, args.patience)
     vae_trainer.fit(vae, data_train, data_val)
     vae_trainer.test(vae, data_test)
-    posterior_x = PosteriorX(args.lr_posterior_x, args.data_dim, args.hidden_dims, args.latent_dim)
+    posterior_x = PosteriorX(args.data_dim, args.hidden_dims, args.latent_dim, args.lr_posterior_x, args.batch_size,
+        args.n_components, args.n_samples)
     posterior_x.posterior_xy.load_state_dict(vae.encoder.state_dict())
     posterior_x_trainer = make_trainer(os.path.join(args.dpath, "posterior_x"), seed, args.n_epochs, args.patience)
     posterior_x_trainer.fit(posterior_x, data_train, data_val)
@@ -37,4 +38,6 @@ if __name__ == "__main__":
     parser.add_argument("--batch_size", type=int, default=100)
     parser.add_argument("--hidden_dims", nargs="+", type=int, default=[100, 100])
     parser.add_argument("--latent_dim", type=int, default=10)
+    parser.add_argument("--n_components", type=int, default=10)
+    parser.add_argument("--n_samples", type=int, default=100)
     main(parser.parse_args())
