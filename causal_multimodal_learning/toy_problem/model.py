@@ -1,55 +1,16 @@
 import pytorch_lightning as pl
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
-from utils.framework import gaussian_nll, make_gaussian, prior_kld
+from utils.nn_utils import MLP
+from utils.stats import gaussian_nll, make_gaussian, prior_kld
 from torch.optim import Adam
 
-class EncoderX(nn.Module):
-    def __init__(self, data_dim, hidden_dim, latent_dim):
-        super().__init__()
-        self.fc1 = nn.Linear(2 * data_dim, hidden_dim)
-        self.fc2 = nn.Linear(hidden_dim, hidden_dim)
-        self.fc31 = nn.Linear(hidden_dim, latent_dim)
-        self.fc32 = nn.Linear(hidden_dim, latent_dim)
-
-    def forward(self, x0, x1):
-        out = F.silu(self.fc1(torch.hstack((x0, x1))))
-        out = F.silu(self.fc2(out))
-        return self.fc31(out), self.fc32(out)
-
-class EncoderXy(nn.Module):
-    def __init__(self, data_dim, hidden_dim, latent_dim):
-        super().__init__()
-        self.fc1 = nn.Linear(3 * data_dim, hidden_dim)
-        self.fc2 = nn.Linear(hidden_dim, hidden_dim)
-        self.fc31 = nn.Linear(hidden_dim, latent_dim)
-        self.fc32 = nn.Linear(hidden_dim, latent_dim)
-
-    def forward(self, x0, x1, y):
-        out = F.silu(self.fc1(torch.hstack((x0, x1, y))))
-        out = F.silu(self.fc2(out))
-        return self.fc31(out), self.fc32(out)
-
-class Decoder(nn.Module):
-    def __init__(self, data_dim, hidden_dim, latent_dim):
-        super().__init__()
-        self.fc1 = nn.Linear(latent_dim + 2 * data_dim, hidden_dim)
-        self.fc2 = nn.Linear(hidden_dim, hidden_dim)
-        self.fc3 = nn.Linear(hidden_dim, data_dim)
-
-    def forward(self, x0, x1, z):
-        out = F.silu(self.fc1(torch.hstack((x0, x1, z))))
-        out = F.silu(self.fc2(out))
-        return self.fc3(out)
-
 class PosteriorX(pl.LightningModule):
-    def __init__(self, lr, posterior_xy, data_dim, hidden_dim, latent_dim):
+    def __init__(self, lr, posterior_xy, data_dim, hidden_dims, latent_dim):
         super().__init__()
         self.save_hyperparameters(ignore=["posterior_xy"])
         self.lr = lr
         self.posterior_xy = posterior_xy
-        self.posterior_x = EncoderX(data_dim, hidden_dim, latent_dim)
+        self.posterior_x = MLP(2 * data_dim, hidden_dims, [latent_dim] * 2)
 
     def set_posterior_xy(self, posterior_xy):
         self.posterior_xy = posterior_xy
@@ -81,13 +42,13 @@ class PosteriorX(pl.LightningModule):
         return Adam(self.posterior_x.parameters(), lr=self.lr)
 
 class SemiSupervisedVae(pl.LightningModule):
-    def __init__(self, lr, data_dim, hidden_dim, latent_dim):
+    def __init__(self, lr, data_dim, hidden_dims, latent_dim):
         super().__init__()
         self.save_hyperparameters()
         self.lr = lr
-        self.encoder = EncoderXy(data_dim, hidden_dim, latent_dim)
-        self.decoder_mu = Decoder(data_dim, hidden_dim, latent_dim)
-        self.decoder_logvar = Decoder(data_dim, hidden_dim, latent_dim)
+        self.encoder = MLP(3 * data_dim, hidden_dims, [latent_dim] * 2)
+        self.decoder_mu = MLP(latent_dim + 2 * data_dim, hidden_dims, data_dim)
+        self.decoder_logvar = MLP(latent_dim + 2 * data_dim, hidden_dims, data_dim)
 
     def sample_z(self, mu, logvar):
         if self.training:

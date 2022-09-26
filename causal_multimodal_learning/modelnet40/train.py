@@ -2,7 +2,7 @@ import os
 import pytorch_lightning as pl
 from argparse import ArgumentParser
 from utils.file import save_file
-from utils.framework import make_trainer
+from utils.stats import make_trainer
 from modelnet40.data import make_data
 from modelnet40.model import SemiSupervisedVae
 

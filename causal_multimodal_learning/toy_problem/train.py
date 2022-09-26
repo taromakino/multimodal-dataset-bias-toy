@@ -3,7 +3,7 @@ import pytorch_lightning as pl
 import torch
 from argparse import ArgumentParser
 from utils.file import save_file
-from utils.framework import make_trainer
+from utils.nn_utils import make_trainer
 from toy_problem.data import make_data
 from toy_problem.model import SemiSupervisedVae, PosteriorX
 
@@ -13,11 +13,11 @@ def main(args):
     pl.seed_everything(seed)
     data_train, data_val, data_test = make_data(seed, args.n_examples, args.data_dim, args.u_mult, args.trainval_ratios,
         args.batch_size)
-    vae = SemiSupervisedVae(args.lr_vae, args.data_dim, args.hidden_dim, args.latent_dim)
+    vae = SemiSupervisedVae(args.lr_vae, args.data_dim, args.hidden_dims, args.latent_dim)
     vae_trainer = make_trainer(os.path.join(args.dpath, "vae"), seed, args.n_epochs, args.patience)
     vae_trainer.fit(vae, data_train, data_val)
     vae_trainer.test(vae, data_test)
-    posterior_x = PosteriorX(args.lr_posterior_x, vae.encoder, args.data_dim, args.hidden_dim, args.latent_dim)
+    posterior_x = PosteriorX(args.lr_posterior_x, vae.encoder, args.data_dim, args.hidden_dims, args.latent_dim)
     posterior_x_trainer = make_trainer(os.path.join(args.dpath, "posterior_x"), seed, args.n_epochs, args.patience)
     posterior_x_trainer.fit(posterior_x, data_train, data_val)
     posterior_x_trainer.test(posterior_x, data_test)
@@ -39,6 +39,6 @@ if __name__ == "__main__":
     parser.add_argument("--n_epochs", type=int, default=200)
     parser.add_argument("--patience", type=int, default=20)
     parser.add_argument("--batch_size", type=int, default=100)
-    parser.add_argument("--hidden_dim", type=int, default=100)
+    parser.add_argument("--hidden_dims", nargs="+", type=int, default=[100, 100])
     parser.add_argument("--latent_dim", type=int, default=10)
     main(parser.parse_args())

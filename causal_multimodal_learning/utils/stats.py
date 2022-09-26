@@ -1,12 +1,7 @@
-import pytorch_lightning as pl
 import torch
-import torch.nn as nn
 import torch.distributions
 from torch.distributions.normal import Normal
 from torch.distributions.multivariate_normal import MultivariateNormal
-from pytorch_lightning.callbacks import ModelCheckpoint
-from pytorch_lightning.callbacks.early_stopping import EarlyStopping
-from pytorch_lightning.loggers import CSVLogger
 
 def make_gaussian(mu, logvar):
     '''
@@ -33,12 +28,3 @@ def gaussian_kld(mu_p, logvar_p, mu_q, logvar_q):
 
 def prior_kld(mu, logvar):
     return -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp(), dim=1)
-
-def make_trainer(dpath, seed, n_epochs, patience):
-    return pl.Trainer(
-        logger=CSVLogger(dpath, name=None, version=seed),
-        callbacks=[
-            ModelCheckpoint(monitor="val_loss"),
-            EarlyStopping(monitor="val_loss", patience=patience)],
-        max_epochs=n_epochs,
-        accelerator="gpu" if torch.cuda.is_available() else "cpu")

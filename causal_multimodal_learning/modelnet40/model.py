@@ -2,7 +2,7 @@ import torch
 import torch.nn.functional as F
 import pytorch_lightning as pl
 import torchvision
-from utils.framework import gaussian_kld, prior_kld
+from utils.stats import gaussian_kld, prior_kld
 from torch import nn
 from torch.optim import Adam
 
