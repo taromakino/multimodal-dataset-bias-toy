@@ -10,7 +10,7 @@ from utils.stats import make_gaussian
 from utils.plot_settings import *
 
 n_seeds = 5
-n_samples = 1000
+n_samples = 100
 
 confounded_means, confounded_sds = [], []
 deconfounded_means, deconfounded_sds = [], []
