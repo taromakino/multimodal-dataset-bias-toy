@@ -10,7 +10,7 @@ from utils.stats import make_gaussian
 from utils.plot_settings import *
 
 n_seeds = 1
-n_samples = 1000
+n_samples = 100
 
 confounded_means, confounded_sds = [], []
 deconfounded_means, deconfounded_sds = [], []
@@ -29,11 +29,11 @@ for u_mult in u_mult_range:
 
         confounded_logp = deconfounded_logp = 0
         for x0, x1, y in data_test:
-            mu_x, logvar_x = posterior_x.posterior_x(x0, x1)
-            posterior_x_dist = make_gaussian(mu_x, logvar_x)
-
+            z = []
+            for _ in range(n_samples):
+                z.append(posterior_x.posterior_x.sample(x0, x1, n_samples)[None])
+            z = torch.cat(z)
             x0_rep, x1_rep = x0.repeat(n_samples, 1), x1.repeat(n_samples, 1)
-            z = posterior_x_dist.sample((n_samples,))
 
             y_mu = vae.decoder_mu(x0_rep, x1_rep, z)
             y_logvar = vae.decoder_logvar(x0_rep, x1_rep, z)
@@ -42,7 +42,7 @@ for u_mult in u_mult_range:
 
             confounded_logp += -torch.log(torch.tensor(n_samples)) + torch.logsumexp(y_logp, 0).item()
             deconfounded_logp += -torch.log(torch.tensor(n_samples)) + torch.logsumexp(prior.log_prob(z) -
-                posterior_x_dist.log_prob(z) + y_logp, 0).item()
+                posterior_x.posterior_x(x0_rep, x1_rep, z) + y_logp, 0).item()
         confounded_logps.append(confounded_logp)
         deconfounded_logps.append(deconfounded_logp)
     confounded_means.append(np.mean(confounded_logps))

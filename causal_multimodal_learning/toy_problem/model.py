@@ -4,6 +4,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from utils.nn_utils import MLP
 from utils.stats import gaussian_nll, make_gaussian, prior_kld
+from torch.distributions import Categorical
 from torch.optim import Adam
 
 class MixtureDensityNetwork(nn.Module):
@@ -15,6 +16,9 @@ class MixtureDensityNetwork(nn.Module):
             self.encoders.append(MLP(2 * data_dim, hidden_dims, [latent_dim] * 2))
 
     def forward(self, x0, x1, z):
+        '''
+        log-density
+        '''
         gaussian_logp = []
         for encoder in self.encoders:
             mu, logvar = encoder(x0, x1)
@@ -23,6 +27,18 @@ class MixtureDensityNetwork(nn.Module):
         gaussian_logp = torch.stack(gaussian_logp, dim=-1)
         prior_logp = F.log_softmax(self.prior(x0, x1), dim=-1)
         return torch.logsumexp(gaussian_logp + prior_logp, -1)
+
+    def sample(self, x0, x1):
+        '''
+        Sample once from a single example
+        '''
+        assert len(x0) == 1
+        logits = self.prior(x0, x1)
+        prior_dist = Categorical(logits=logits)
+        component_idx = prior_dist.sample()
+        mu, logvar = self.encoders[component_idx](x0, x1)
+        component_dist = make_gaussian(mu, logvar)
+        return component_dist.sample()
 
 class PosteriorX(pl.LightningModule):
     def __init__(self, data_dim, hidden_dims, latent_dim, lr, batch_size, n_components, n_samples):
