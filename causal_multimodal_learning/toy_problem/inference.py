@@ -9,8 +9,8 @@ from utils.nn_utils import load_model
 from utils.stats import make_gaussian
 from utils.plot_settings import *
 
-n_seeds = 1
-n_samples = 100
+n_seeds = 5
+n_samples = 1000
 
 confounded_means, confounded_sds = [], []
 deconfounded_means, deconfounded_sds = [], []
@@ -31,7 +31,7 @@ for u_mult in u_mult_range:
         for x0, x1, y in data_test:
             z = []
             for _ in range(n_samples):
-                z.append(posterior_x.posterior_x.sample(x0, x1, n_samples)[None])
+                z.append(posterior_x.posterior_x.sample(x0, x1)[None])
             z = torch.cat(z)
             x0_rep, x1_rep = x0.repeat(n_samples, 1), x1.repeat(n_samples, 1)
 
