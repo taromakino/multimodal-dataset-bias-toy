@@ -5,15 +5,12 @@ from utils.stats import gaussian_nll, make_gaussian, prior_kld
 from torch.optim import Adam
 
 class PosteriorX(pl.LightningModule):
-    def __init__(self, lr, posterior_xy, data_dim, hidden_dims, latent_dim):
+    def __init__(self, lr, data_dim, hidden_dims, latent_dim):
         super().__init__()
-        self.save_hyperparameters(ignore=["posterior_xy"])
+        self.save_hyperparameters()
         self.lr = lr
-        self.posterior_xy = posterior_xy
+        self.posterior_xy = MLP(3 * data_dim, hidden_dims, [latent_dim] * 2)
         self.posterior_x = MLP(2 * data_dim, hidden_dims, [latent_dim] * 2)
-
-    def set_posterior_xy(self, posterior_xy):
-        self.posterior_xy = posterior_xy
 
     def loss(self, x0, x1, y):
         mu_xy, logvar_xy = self.posterior_xy(x0, x1, y)

@@ -3,11 +3,13 @@ import numpy as np
 import pytorch_lightning as pl
 import torch
 from toy_problem.data import make_data
+from toy_problem.model import PosteriorX, SemiSupervisedVae
 from utils.file import load_file
+from utils.nn_utils import load_model
 from utils.stats import make_gaussian
 from utils.plot_settings import *
 
-n_seeds = 5
+n_seeds = 1
 n_samples = 1000
 
 confounded_means, confounded_sds = [], []
@@ -21,24 +23,20 @@ for u_mult in u_mult_range:
         args = load_file(os.path.join("results", "args.pkl"))
         _, _, data_test = make_data(seed, args.n_examples, args.data_dim, u_mult, args.trainval_ratios, 1)
 
-        decoder_mu = Decoder(args.data_dim, args.hidden_dim, args.latent_dim)
-        decoder_logvar = Decoder(args.data_dim, args.hidden_dim, args.latent_dim)
-        posterior_x = EncoderX(args.data_dim, args.hidden_dim, args.latent_dim)
-        decoder_mu.load_state_dict(torch.load(os.path.join("results", "vae", f"version_{seed}", "decoder_mu.pt")))
-        decoder_logvar.load_state_dict(torch.load(os.path.join("results", "vae", f"version_{seed}", "decoder_logvar.pt")))
-        posterior_x.load_state_dict(torch.load(os.path.join("results", "posterior_x", f"version_{seed}", "posterior_x.pt")))
+        vae = load_model(SemiSupervisedVae, os.path.join("results", "vae", f"version_{seed}", "checkpoints"))
+        posterior_x = load_model(PosteriorX, os.path.join("results", "posterior_x", f"version_{seed}", "checkpoints"))
         prior = make_gaussian(torch.zeros(args.latent_dim)[None], torch.zeros(args.latent_dim)[None])
 
         confounded_logp = deconfounded_logp = 0
         for x0, x1, y in data_test:
-            mu_x, logvar_x = posterior_x(x0, x1)
+            mu_x, logvar_x = posterior_x.posterior_x(x0, x1)
             posterior_x_dist = make_gaussian(mu_x, logvar_x)
 
             x0_rep, x1_rep = x0.repeat(n_samples, 1), x1.repeat(n_samples, 1)
             z = posterior_x_dist.sample((n_samples,))
 
-            y_mu = decoder_mu(x0_rep, x1_rep, z)
-            y_logvar = decoder_logvar(x0_rep, x1_rep, z)
+            y_mu = vae.decoder_mu(x0_rep, x1_rep, z)
+            y_logvar = vae.decoder_logvar(x0_rep, x1_rep, z)
             decoder_dist = make_gaussian(y_mu, y_logvar)
             y_logp = decoder_dist.log_prob(y.squeeze())
 

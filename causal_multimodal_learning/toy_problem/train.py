@@ -1,6 +1,5 @@
 import os
 import pytorch_lightning as pl
-import torch
 from argparse import ArgumentParser
 from utils.file import save_file
 from utils.nn_utils import make_trainer
@@ -17,14 +16,11 @@ def main(args):
     vae_trainer = make_trainer(os.path.join(args.dpath, "vae"), seed, args.n_epochs, args.patience)
     vae_trainer.fit(vae, data_train, data_val)
     vae_trainer.test(vae, data_test)
-    posterior_x = PosteriorX(args.lr_posterior_x, vae.encoder, args.data_dim, args.hidden_dims, args.latent_dim)
+    posterior_x = PosteriorX(args.lr_posterior_x, args.data_dim, args.hidden_dims, args.latent_dim)
+    posterior_x.posterior_xy.load_state_dict(vae.encoder.state_dict())
     posterior_x_trainer = make_trainer(os.path.join(args.dpath, "posterior_x"), seed, args.n_epochs, args.patience)
     posterior_x_trainer.fit(posterior_x, data_train, data_val)
     posterior_x_trainer.test(posterior_x, data_test)
-    torch.save(vae.decoder_mu.state_dict(), os.path.join(args.dpath, "vae", f"version_{seed}", "decoder_mu.pt"))
-    torch.save(vae.decoder_logvar.state_dict(), os.path.join(args.dpath, "vae", f"version_{seed}", "decoder_logvar.pt"))
-    torch.save(posterior_x.posterior_x.state_dict(), os.path.join(args.dpath, "posterior_x", f"version_{seed}",
-        "posterior_x.pt"))
 
 if __name__ == "__main__":
     parser = ArgumentParser()
