@@ -9,6 +9,7 @@ from torch.optim import Adam
 class MixtureDensityNetwork(nn.Module):
     def __init__(self, data_dim, hidden_dims, latent_dim, n_components):
         super().__init__()
+        self.n_components = n_components
         self.prior = MLP(2 * data_dim, hidden_dims, n_components)
         self.encoders = nn.ModuleList()
         for _ in range(n_components):
@@ -29,7 +30,7 @@ class MixtureDensityNetwork(nn.Module):
         z = []
         for x0_elem, x1_elem in zip(x0, x1):
             z_batch = []
-            component_counts = (F.softmax(self.prior(x0_elem, x1_elem), dim=0) * n_samples).round().int()
+            component_counts = (F.softmax(self.prior(x0_elem, x1_elem), dim=0) * n_samples).ceil().int()
             for component_idx in range(self.n_components):
                 mu, logvar = self.encoders[component_idx](x0_elem, x1_elem)
                 dist = make_gaussian(mu[None], logvar[None])
