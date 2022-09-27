@@ -52,6 +52,7 @@ def main(args):
     ax.set_ylabel("Log-likelihood")
     ax.legend()
     fig.tight_layout()
+    plt.savefig(os.path.join(args.dpath, "fig.png"), bbox_inches="tight")
 
 if __name__ == "__main__":
     parser = ArgumentParser()
