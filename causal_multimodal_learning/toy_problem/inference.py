@@ -17,12 +17,12 @@ def main(args):
         confounded_logps, deconfounded_logps = [], []
         for seed in range(args.n_seeds):
             pl.seed_everything(seed)
-            args = load_file(os.path.join(args.dpath, "args.pkl"))
-            _, _, data_test = make_data(seed, args.n_examples, args.data_dim, u_mult, args.trainval_ratios, 1)
+            hparams = load_file(os.path.join(args.dpath, "args.pkl"))
+            _, _, data_test = make_data(seed, hparams.n_examples, hparams.data_dim, u_mult, hparams.trainval_ratios, 1)
 
             vae = load_model(SemiSupervisedVae, os.path.join("results", "vae", f"version_{seed}", "checkpoints"))
             posterior_x = load_model(PosteriorX, os.path.join("results", "posterior_x", f"version_{seed}", "checkpoints"))
-            prior = make_gaussian(torch.zeros(args.latent_dim)[None], torch.zeros(args.latent_dim)[None])
+            prior = make_gaussian(torch.zeros(hparams.latent_dim)[None], torch.zeros(hparams.latent_dim)[None])
 
             confounded_logp = deconfounded_logp = 0
             for x0, x1, y in data_test:
