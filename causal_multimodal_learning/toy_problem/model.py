@@ -4,7 +4,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 from utils.nn_utils import MLP, device
 from utils.stats import gaussian_nll, make_gaussian, prior_kld
-from torch.distributions import Categorical
 from torch.optim import Adam
 
 class MixtureDensityNetwork(nn.Module):
@@ -16,9 +15,7 @@ class MixtureDensityNetwork(nn.Module):
             self.encoders.append(MLP(2 * data_dim, hidden_dims, [latent_dim] * 2))
 
     def forward(self, x0, x1, z):
-        '''
-        log-density
-        '''
+        # Log-density
         gaussian_logp = []
         for encoder in self.encoders:
             mu, logvar = encoder(x0, x1)
@@ -28,17 +25,18 @@ class MixtureDensityNetwork(nn.Module):
         prior_logp = F.log_softmax(self.prior(x0, x1), dim=-1)
         return torch.logsumexp(gaussian_logp + prior_logp, -1)
 
-    def sample(self, x0, x1):
-        '''
-        Sample once from a single example
-        '''
-        assert len(x0) == 1
-        logits = self.prior(x0, x1)
-        prior_dist = Categorical(logits=logits)
-        component_idx = prior_dist.sample()
-        mu, logvar = self.encoders[component_idx](x0, x1)
-        component_dist = make_gaussian(mu, logvar)
-        return component_dist.sample()
+    def sample(self, x0, x1, n_samples):
+        z = []
+        for x0_elem, x1_elem in zip(x0, x1):
+            z_batch = []
+            component_counts = (F.softmax(self.prior(x0_elem, x1_elem), dim=0) * n_samples).round().int()
+            for component_idx in range(self.n_components):
+                mu, logvar = self.encoders[component_idx](x0_elem, x1_elem)
+                dist = make_gaussian(mu[None], logvar[None])
+                z_batch.append(dist.sample((component_counts[component_idx],)))
+            z_batch = torch.cat(z_batch, dim=0) # (sample dim, latent_dim)
+            z.append(z_batch[:n_samples]) # Adjust for rounding error
+        return torch.stack(z, dim=1) # (sample dim, batch dim, latent dim)
 
 class PosteriorX(pl.LightningModule):
     def __init__(self, data_dim, hidden_dims, latent_dim, lr, batch_size, n_components, n_samples):
