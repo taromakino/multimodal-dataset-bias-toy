@@ -39,5 +39,5 @@ if __name__ == "__main__":
     parser.add_argument("--hidden_dims", nargs="+", type=int, default=[100, 100])
     parser.add_argument("--latent_dim", type=int, default=10)
     parser.add_argument("--n_components", type=int, default=10)
-    parser.add_argument("--n_samples", type=int, default=1000)
+    parser.add_argument("--n_samples", type=int, default=10000)
     main(parser.parse_args())

@@ -47,8 +47,8 @@ class PosteriorX(pl.LightningModule):
         self.n_samples = n_samples
         self.posterior_xy = MLP(3 * data_dim, hidden_dims, [latent_dim] * 2)
         self.posterior_x = MixtureDensityNetwork(data_dim, hidden_dims, latent_dim, n_components)
-        self.prior = make_gaussian(torch.zeros((batch_size, n_components), device=device()), torch.zeros((batch_size,
-            n_components), device=device()))
+        self.prior = make_gaussian(torch.zeros((batch_size, latent_dim), device=device()), torch.zeros((batch_size,
+            latent_dim), device=device()))
 
     def loss(self, x0, x1, y):
         mu_xy, logvar_xy = self.posterior_xy(x0, x1, y)
