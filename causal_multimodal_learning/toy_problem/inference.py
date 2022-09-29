@@ -26,7 +26,9 @@ def main(args):
 
             confounded_logp = deconfounded_logp = 0
             for x0, x1, y in data_test:
-                z = posterior_x.posterior_x.sample(x0, x1, args.n_samples).squeeze()
+                mu_x, logvar_x = posterior_x.posterior_x(x0, x1)
+                posterior_x_dist = make_gaussian(mu_x, logvar_x)
+                z = posterior_x_dist.sample((args.n_samples,))
                 x0_rep, x1_rep = x0.repeat(args.n_samples, 1), x1.repeat(args.n_samples, 1)
 
                 y_mu = vae.decoder_mu(x0_rep, x1_rep, z)
@@ -36,7 +38,7 @@ def main(args):
 
                 confounded_logp += -torch.log(torch.tensor(args.n_samples)) + torch.logsumexp(y_logp, 0).item()
                 deconfounded_logp += -torch.log(torch.tensor(args.n_samples)) + torch.logsumexp(prior.log_prob(z) -
-                    posterior_x.posterior_x(x0_rep, x1_rep, z) + y_logp, 0).item()
+                    posterior_x_dist.log_prob(z) + y_logp, 0).item()
             confounded_logps.append(confounded_logp)
             deconfounded_logps.append(deconfounded_logp)
         confounded_means.append(np.mean(confounded_logps))
