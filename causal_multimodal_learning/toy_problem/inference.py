@@ -26,13 +26,12 @@ def main(args):
 
             confounded_logp = deconfounded_logp = 0
             for x0, x1, y in data_test:
-                mu_x, logvar_x = posterior_x.posterior_x(x0, x1)
+                mu_x, logvar_x = posterior_x.encoder_x(x0, x1)
                 posterior_x_dist = make_gaussian(mu_x, logvar_x)
                 z = posterior_x_dist.sample((args.n_samples,))
                 x0_rep, x1_rep = x0.repeat(args.n_samples, 1), x1.repeat(args.n_samples, 1)
 
-                y_mu = vae.decoder_mu(x0_rep, x1_rep, z)
-                y_logvar = vae.decoder_logvar(x0_rep, x1_rep, z)
+                y_mu, y_logvar = vae.decoder(x0_rep, x1_rep, z)
                 decoder_dist = make_gaussian(y_mu, y_logvar)
                 y_logp = decoder_dist.log_prob(y.squeeze())
 
