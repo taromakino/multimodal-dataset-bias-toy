@@ -20,8 +20,8 @@ def main(args):
             hparams = load_file(os.path.join(args.dpath, "args.pkl"))
             _, _, data_test = make_data(seed, hparams.n_examples, hparams.data_dim, u_mult, hparams.trainval_ratios, 1)
 
-            vae = load_model(SemiSupervisedVae, os.path.join("results", "vae", f"version_{seed}", "checkpoints"))
-            posterior_x = load_model(PosteriorX, os.path.join("results", "posterior_x", f"version_{seed}", "checkpoints"))
+            vae = load_model(SemiSupervisedVae, os.path.join(args.dpath, "vae", f"version_{seed}", "checkpoints"))
+            posterior_x = load_model(PosteriorX, os.path.join(args.dpath, "posterior_x", f"version_{seed}", "checkpoints"))
             prior = make_gaussian(torch.zeros(hparams.latent_dim)[None], torch.zeros(hparams.latent_dim)[None])
 
             confounded_logp = deconfounded_logp = 0
