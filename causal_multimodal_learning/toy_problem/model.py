@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 from utils.nn_utils import MLP, device
 from utils.stats import gaussian_nll, make_gaussian, prior_kld
-from torch.optim import Adam
+from torch.optim import AdamW
 
 class GaussianNetwork(nn.Module):
     def __init__(self, in_dim, hidden_dims, out_dim):
@@ -17,10 +17,11 @@ class GaussianNetwork(nn.Module):
         return mu, logvar
 
 class PosteriorX(pl.LightningModule):
-    def __init__(self, data_dim, hidden_dims, latent_dim, lr, batch_size):
+    def __init__(self, data_dim, hidden_dims, latent_dim, lr, wd, batch_size):
         super().__init__()
         self.save_hyperparameters()
         self.lr = lr
+        self.wd = wd
         self.encoder_xy = GaussianNetwork(3 * data_dim, hidden_dims, latent_dim)
         self.encoder_x = GaussianNetwork(2 * data_dim, hidden_dims, latent_dim)
         self.prior = make_gaussian(torch.zeros((batch_size, latent_dim), device=device()), torch.zeros((batch_size,
@@ -50,13 +51,14 @@ class PosteriorX(pl.LightningModule):
         self.log("test_kld", kld, on_step=False, on_epoch=True)
 
     def configure_optimizers(self):
-        return Adam(self.encoder_x.parameters(), lr=self.lr)
+        return AdamW(self.encoder_x.parameters(), lr=self.lr, weight_decay=self.wd)
 
 class SemiSupervisedVae(pl.LightningModule):
-    def __init__(self, data_dim, hidden_dims, latent_dim, lr):
+    def __init__(self, data_dim, hidden_dims, latent_dim, lr, wd):
         super().__init__()
         self.save_hyperparameters()
         self.lr = lr
+        self.wd = wd
         self.encoder = GaussianNetwork(3 * data_dim, hidden_dims, latent_dim)
         self.decoder = GaussianNetwork(latent_dim + 2 * data_dim, hidden_dims, data_dim)
 
@@ -91,4 +93,4 @@ class SemiSupervisedVae(pl.LightningModule):
         self.log("test_kld_loss", kld_loss.mean(), on_step=False, on_epoch=True)
 
     def configure_optimizers(self):
-        return Adam(self.parameters(), lr=self.lr)
+        return AdamW(self.parameters(), lr=self.lr, weight_decay=self.wd)
