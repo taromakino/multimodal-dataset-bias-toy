@@ -18,7 +18,8 @@ def main(args):
         for seed in range(args.n_seeds):
             pl.seed_everything(seed)
             hparams = load_file(os.path.join(args.dpath, "args.pkl"))
-            _, _, data_test = make_data(seed, hparams.n_examples, hparams.data_dim, u_mult, hparams.trainval_ratios, 1)
+            _, _, data_test = make_data(seed, hparams.n_examples, hparams.data_dim, u_mult, hparams.trainval_ratios, 1,
+                args.n_workers)
 
             vae = load_model(SemiSupervisedVae, os.path.join(args.dpath, "vae", f"version_{seed}", "checkpoints"))
             posterior_x = load_model(PosteriorX, os.path.join(args.dpath, "posterior_x", f"version_{seed}", "checkpoints"))
@@ -38,6 +39,7 @@ def main(args):
                 confounded_logp += -torch.log(torch.tensor(args.n_samples)) + torch.logsumexp(y_logp, 0).item()
                 deconfounded_logp += -torch.log(torch.tensor(args.n_samples)) + torch.logsumexp(prior.log_prob(z) -
                     posterior_x_dist.log_prob(z) + y_logp, 0).item()
+            confounded_logp, deconfounded_logp = confounded_logp / args.n_examples, deconfounded_logp / args.n_examples
             confounded_logps.append(confounded_logp)
             deconfounded_logps.append(deconfounded_logp)
         confounded_means.append(np.mean(confounded_logps))
