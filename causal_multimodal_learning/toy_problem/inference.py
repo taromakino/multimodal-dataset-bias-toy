@@ -39,7 +39,8 @@ def main(args):
                 confounded_logp += -torch.log(torch.tensor(args.n_samples)) + torch.logsumexp(y_logp, 0).item()
                 deconfounded_logp += -torch.log(torch.tensor(args.n_samples)) + torch.logsumexp(prior.log_prob(z) -
                     posterior_x_dist.log_prob(z) + y_logp, 0).item()
-            confounded_logp, deconfounded_logp = confounded_logp / args.n_examples, deconfounded_logp / args.n_examples
+            n_examples = len(data_test.dataset)
+            confounded_logp, deconfounded_logp = confounded_logp / n_examples, deconfounded_logp / n_examples
             confounded_logps.append(confounded_logp)
             deconfounded_logps.append(deconfounded_logp)
         confounded_means.append(np.mean(confounded_logps))
