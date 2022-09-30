@@ -5,7 +5,7 @@ import torch
 from argparse import ArgumentParser
 from toy_problem.data import make_data
 from toy_problem.model import PosteriorX, SemiSupervisedVae
-from utils.file import load_file
+from utils.file import load_file, save_file
 from utils.nn_utils import load_model
 from utils.stats import make_gaussian
 from utils.plot_settings import *
@@ -47,6 +47,8 @@ def main(args):
         confounded_sds.append(np.std(confounded_logps))
         deconfounded_means.append(np.mean(deconfounded_logps))
         deconfounded_sds.append(np.std(deconfounded_logps))
+    save_file((confounded_means, confounded_sds, deconfounded_means, deconfounded_sds), os.path.join(args.dpath,
+        "inference.pkl"))
     fig, ax = plt.subplots(1, 1, figsize=(7, 4))
     ax.errorbar(np.arange(len(args.u_mult_range)), confounded_means, confounded_sds, label=r"$\log P(Y \mid X, X')$")
     ax.errorbar(np.arange(len(args.u_mult_range)) + 0.05, deconfounded_means, deconfounded_sds,
