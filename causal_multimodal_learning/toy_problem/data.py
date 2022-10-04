@@ -41,7 +41,7 @@ def make_dataset(seed, n_examples, data_dim, u_mult):
         u = rng.multivariate_normal(mean=np.zeros(data_dim), cov=np.eye(data_dim), size=n_examples).astype("float32")
         x0_noise = rng.multivariate_normal(mean=np.zeros(data_dim), cov=np.eye(data_dim), size=n_examples).astype("float32")
         x1_noise = rng.multivariate_normal(mean=np.zeros(data_dim), cov=np.eye(data_dim), size=n_examples).astype("float32")
-        y_noise = rng.multivariate_normal(mean=np.zeros(data_dim), cov=np.diag(np.repeat(0.1, data_dim)),
+        y_noise = rng.multivariate_normal(mean=np.zeros(data_dim), cov=np.diag(np.repeat(0.1**2, data_dim)),
             size=n_examples).astype("float32")
     x0 = u + x0_noise
     x1 = u**2 + x1_noise
