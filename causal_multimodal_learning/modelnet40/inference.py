@@ -2,6 +2,7 @@ import os
 import numpy as np
 import pytorch_lightning as pl
 import torch
+import torch.nn.functional as F
 from argparse import ArgumentParser
 from modelnet40.data import make_data
 from modelnet40.model import PosteriorX, SemiSupervisedVae
@@ -38,9 +39,7 @@ def main(args):
                 x0_rep = torch.repeat_interleave(x0, repeats=args.n_samples, dim=0)
                 x1_rep = torch.repeat_interleave(x1, repeats=args.n_samples, dim=0)
 
-                y_mu, y_logvar = vae.decoder(x0_rep, x1_rep, z)
-                decoder_dist = make_gaussian(y_mu, y_logvar)
-                y_logp = decoder_dist.log_prob(y.squeeze())
+                y_logp = F.log_softmax(vae.decoder(x0_rep, x1_rep, z), dim=1)
 
                 confounded_logp += -torch.log(torch.tensor(args.n_samples)) + torch.logsumexp(y_logp, 0).item()
                 deconfounded_logp += -torch.log(torch.tensor(args.n_samples)) + torch.logsumexp(prior.log_prob(z) -
