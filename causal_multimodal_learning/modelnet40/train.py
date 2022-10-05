@@ -33,6 +33,6 @@ if __name__ == "__main__":
     parser.add_argument("--subset_ratio", type=float, default=1)
     parser.add_argument("--batch_size", type=int, default=100)
     parser.add_argument("--n_workers", type=int, default=20)
-    parser.add_argument("--hidden_dims", nargs="+", type=int, default=[256, 256])
-    parser.add_argument("--latent_dim", type=int, default=128)
+    parser.add_argument("--hidden_dims", nargs="+", type=int, default=[512, 512])
+    parser.add_argument("--latent_dim", type=int, default=256)
     main(parser.parse_args())
