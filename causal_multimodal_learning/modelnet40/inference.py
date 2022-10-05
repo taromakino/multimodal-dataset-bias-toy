@@ -10,6 +10,7 @@ from utils.nn_utils import load_model
 from utils.stats import make_gaussian
 from utils.plot_settings import *
 
+@torch.no_grad()
 def main(args):
     confounded_means, confounded_sds = [], []
     deconfounded_means, deconfounded_sds = [], []
@@ -25,6 +26,9 @@ def main(args):
             posterior_x = load_model(PosteriorX, os.path.join(args.dpath, f"r={subset_ratio}", "posterior_x",
                 f"version_{seed}", "checkpoints"))
             prior = make_gaussian(torch.zeros(hparams.latent_dim)[None], torch.zeros(hparams.latent_dim)[None])
+
+            vae.eval()
+            posterior_x.eval()
 
             confounded_logp = deconfounded_logp = 0
             for x0, x1, y in data_test:
