@@ -18,8 +18,12 @@ FRONT_VIEW_IDX = 0
 REAR_VIEW_IDX = 6
 
 class ModelNet40Dataset(Dataset):
-    def __init__(self, stage):
+    def __init__(self, stage, seed, subset_ratio):
         self.series = load_file(os.path.join(DPATH, f"{stage}_series.pkl"))
+        rng = np.random.RandomState(seed)
+        n_examples = len(self.series)
+        subset_idxs = rng.choice(n_examples, int(subset_ratio * n_examples), replace=False)
+        self.series = self.series.iloc[subset_idxs]
         if stage == "test":
             self.transform = transforms.Compose([
                 transforms.ToTensor(),
@@ -83,11 +87,11 @@ def make_data_dfs(train_ratio):
     save_file(to_series(pd.DataFrame(val_df)), os.path.join(DPATH, "val_series.pkl"))
     save_file(to_series(pd.DataFrame(test_df)), os.path.join(DPATH, "test_series.pkl"))
 
-def make_data(batch_size, n_workers):
-    train_data = DataLoader(ModelNet40Dataset("train"), shuffle=True, batch_size=batch_size, num_workers=n_workers,
+def make_data(seed, subset_ratio, batch_size, n_workers):
+    train_data = DataLoader(ModelNet40Dataset("train", seed, subset_ratio), shuffle=True, batch_size=batch_size,
+        num_workers=n_workers, pin_memory=True, persistent_workers=True)
+    val_data = DataLoader(ModelNet40Dataset("val", seed, subset_ratio), batch_size=batch_size, num_workers=n_workers,
         pin_memory=True, persistent_workers=True)
-    val_data = DataLoader(ModelNet40Dataset("val"), batch_size=batch_size, num_workers=n_workers, pin_memory=True,
-        persistent_workers=True)
-    test_data = DataLoader(ModelNet40Dataset("test"), batch_size=batch_size, num_workers=n_workers, pin_memory=True,
-        persistent_workers=True)
+    test_data = DataLoader(ModelNet40Dataset("test", seed, subset_ratio), batch_size=batch_size, num_workers=n_workers,
+        pin_memory=True, persistent_workers=True)
     return train_data, val_data, test_data
