@@ -3,8 +3,8 @@ import numpy as np
 import pytorch_lightning as pl
 import torch
 from argparse import ArgumentParser
-from toy_problem.data import make_data
-from toy_problem.model import PosteriorX, SemiSupervisedVae
+from modelnet40.data import make_data
+from modelnet40.model import PosteriorX, SemiSupervisedVae
 from utils.file import load_file, save_file
 from utils.nn_utils import load_model
 from utils.stats import make_gaussian
@@ -13,16 +13,17 @@ from utils.plot_settings import *
 def main(args):
     confounded_means, confounded_sds = [], []
     deconfounded_means, deconfounded_sds = [], []
-    for u_mult in args.u_mult_range:
+    for subset_ratio in args.subset_ratio_range:
         confounded_logps, deconfounded_logps = [], []
         for seed in range(args.n_seeds):
             pl.seed_everything(seed)
-            hparams = load_file(os.path.join(args.dpath, "args.pkl"))
-            _, _, data_test = make_data(seed, hparams.n_examples, hparams.data_dim, u_mult, hparams.trainval_ratios, 1,
-                args.n_workers)
+            hparams = load_file(os.path.join(args.dpath, f"r={subset_ratio}", "args.pkl"))
+            _, _, data_test = make_data(seed, 1, 1, args.n_workers)
 
-            vae = load_model(SemiSupervisedVae, os.path.join(args.dpath, "vae", f"version_{seed}", "checkpoints"))
-            posterior_x = load_model(PosteriorX, os.path.join(args.dpath, "posterior_x", f"version_{seed}", "checkpoints"))
+            vae = load_model(SemiSupervisedVae, os.path.join(args.dpath, f"r={subset_ratio}", "vae", f"version_{seed}",
+                "checkpoints"))
+            posterior_x = load_model(PosteriorX, os.path.join(args.dpath, f"r={subset_ratio}", "posterior_x",
+                f"version_{seed}", "checkpoints"))
             prior = make_gaussian(torch.zeros(hparams.latent_dim)[None], torch.zeros(hparams.latent_dim)[None])
 
             confounded_logp = deconfounded_logp = 0
@@ -65,6 +66,6 @@ if __name__ == "__main__":
     parser.add_argument("--dpath", type=str, default="results")
     parser.add_argument("--n_seeds", type=int, default=5)
     parser.add_argument("--n_samples", type=int, default=10000)
-    parser.add_argument("--u_mult_range", nargs="+", type=float, default=[4, 2, 1, 0.5, 0])
+    parser.add_argument("--subset_ratio_range", nargs="+", type=float, default=[1, 0.75, 0.5, 0.25])
     parser.add_argument("--n_workers", type=int, default=20)
     main(parser.parse_args())
