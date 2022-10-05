@@ -10,7 +10,7 @@ from torch.optim import AdamW
 N_CLASSES = 40
 
 def make_resnet_embedder():
-    model = torchvision.models.resnet18(pretrained=True)
+    model = torchvision.models.resnet50(pretrained=True)
     embed_dim = model.fc.in_features
     model.fc = nn.Identity(embed_dim)
     return model, embed_dim
