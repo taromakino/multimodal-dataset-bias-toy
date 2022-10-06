@@ -7,7 +7,7 @@ from argparse import ArgumentParser
 from modelnet40.data import make_data
 from modelnet40.model import PosteriorX, SemiSupervisedVae
 from utils.file import load_file, save_file
-from utils.nn_utils import load_model
+from utils.nn_utils import device, load_model
 from utils.stats import make_gaussian
 from utils.plot_settings import *
 
@@ -23,16 +23,18 @@ def main(args):
             _, _, data_test = make_data(seed, 1, 1, args.n_workers)
 
             vae = load_model(SemiSupervisedVae, os.path.join(args.dpath, f"r={subset_ratio}", "vae", f"version_{seed}",
-                "checkpoints"))
+                "checkpoints")).to(device()).eval()
             posterior_x = load_model(PosteriorX, os.path.join(args.dpath, f"r={subset_ratio}", "posterior_x",
-                f"version_{seed}", "checkpoints"))
-            prior = make_gaussian(torch.zeros(hparams.latent_dim)[None], torch.zeros(hparams.latent_dim)[None])
+                f"version_{seed}", "checkpoints")).to(device()).eval()
+            prior = make_gaussian(torch.zeros(hparams.latent_dim, device=device())[None], torch.zeros(hparams.latent_dim,
+                device=device())[None])
 
             vae.eval()
             posterior_x.eval()
 
             confounded_logp = deconfounded_logp = 0
             for x0, x1, y in data_test:
+                x0, x1, y = x0.to(device()), x1.to(device()), y.to(device())
                 mu_x, logvar_x = posterior_x.encoder_x(x0, x1)
                 posterior_x_dist = make_gaussian(mu_x, logvar_x)
                 x0_rep = torch.repeat_interleave(x0, repeats=args.n_samples_per_batch, dim=0)
