@@ -74,6 +74,6 @@ if __name__ == "__main__":
     parser.add_argument("--n_seeds", type=int, default=5)
     parser.add_argument("--n_samples", type=int, default=10000)
     parser.add_argument("--n_samples_per_batch", type=int, default=100)
-    parser.add_argument("--subset_ratio_range", nargs="+", type=float, default=[1, 0.75, 0.5, 0.25])
+    parser.add_argument("--subset_ratio_range", nargs="+", type=float, default=["1", "0.75", "0.5", "0.25"])
     parser.add_argument("--n_workers", type=int, default=20)
     main(parser.parse_args())

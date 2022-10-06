@@ -70,6 +70,6 @@ if __name__ == "__main__":
     parser.add_argument("--dpath", type=str, default="results")
     parser.add_argument("--n_seeds", type=int, default=5)
     parser.add_argument("--n_samples", type=int, default=10000)
-    parser.add_argument("--u_mult_range", nargs="+", type=float, default=[4, 2, 1, 0.5, 0])
+    parser.add_argument("--u_mult_range", nargs="+", type=float, default=["4", "2", "1", "0"])
     parser.add_argument("--n_workers", type=int, default=20)
     main(parser.parse_args())
