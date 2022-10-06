@@ -39,7 +39,7 @@ def main(args):
                 x0_rep = torch.repeat_interleave(x0, repeats=args.n_samples, dim=0)
                 x1_rep = torch.repeat_interleave(x1, repeats=args.n_samples, dim=0)
 
-                y_logp = F.log_softmax(vae.decoder(x0_rep, x1_rep, z), dim=1)
+                y_logp = -F.cross_entropy(vae.decoder(x0_rep, x1_rep, z), y, reduction="none")
 
                 confounded_logp += -torch.log(torch.tensor(args.n_samples)) + torch.logsumexp(y_logp, 0).item()
                 deconfounded_logp += -torch.log(torch.tensor(args.n_samples)) + torch.logsumexp(prior.log_prob(z) -
