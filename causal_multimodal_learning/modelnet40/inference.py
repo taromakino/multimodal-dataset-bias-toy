@@ -35,15 +35,16 @@ def main(args):
             for x0, x1, y in data_test:
                 mu_x, logvar_x = posterior_x.encoder_x(x0, x1)
                 posterior_x_dist = make_gaussian(mu_x, logvar_x)
-                z = posterior_x_dist.sample((args.n_samples,))
-                x0_rep = torch.repeat_interleave(x0, repeats=args.n_samples, dim=0)
-                x1_rep = torch.repeat_interleave(x1, repeats=args.n_samples, dim=0)
-
-                y_logp = -F.cross_entropy(vae.decoder(x0_rep, x1_rep, z), y, reduction="none")
-
-                confounded_logp += -torch.log(torch.tensor(args.n_samples)) + torch.logsumexp(y_logp, 0).item()
-                deconfounded_logp += -torch.log(torch.tensor(args.n_samples)) + torch.logsumexp(prior.log_prob(z) -
-                    posterior_x_dist.log_prob(z) + y_logp, 0).item()
+                x0_rep = torch.repeat_interleave(x0, repeats=args.n_samples_per_batch, dim=0)
+                x1_rep = torch.repeat_interleave(x1, repeats=args.n_samples_per_batch, dim=0)
+                y_rep = torch.repeat_interleave(y, repeats=args.n_samples_per_batch, dim=0)
+                n_iters = args.n_samples // args.n_samples_per_batch
+                for _ in range(n_iters):
+                    z = posterior_x_dist.sample((args.n_samples_per_batch,))
+                    y_logp = -F.cross_entropy(vae.decoder(x0_rep, x1_rep, z), y_rep, reduction="none")
+                    confounded_logp += -torch.log(torch.tensor(args.n_samples)) + torch.logsumexp(y_logp, 0).item()
+                    deconfounded_logp += -torch.log(torch.tensor(args.n_samples)) + torch.logsumexp(prior.log_prob(z) -
+                        posterior_x_dist.log_prob(z) + y_logp, 0).item()
             n_examples = len(data_test.dataset)
             confounded_logp, deconfounded_logp = confounded_logp / n_examples, deconfounded_logp / n_examples
             confounded_logps.append(confounded_logp)
@@ -70,6 +71,7 @@ if __name__ == "__main__":
     parser.add_argument("--dpath", type=str, default="results")
     parser.add_argument("--n_seeds", type=int, default=5)
     parser.add_argument("--n_samples", type=int, default=10000)
+    parser.add_argument("--n_samples_per_batch", type=int, default=100)
     parser.add_argument("--subset_ratio_range", nargs="+", type=float, default=[1, 0.75, 0.5, 0.25])
     parser.add_argument("--n_workers", type=int, default=20)
     main(parser.parse_args())
