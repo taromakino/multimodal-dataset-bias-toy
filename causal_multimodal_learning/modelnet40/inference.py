@@ -10,7 +10,7 @@ def main(args):
     pl.seed_everything(args.seed)
     hparams = load_file(os.path.join(args.dpath, "args.pkl"))
     _, _, data_test = make_data(args.seed, 1, 1, args.n_workers)
-    net = InferenceNetwork(args.dpath, args.seed, args.n_samples, args.n_samples_per_batch, hparams.latent_dim)
+    net = InferenceNetwork(args.dpath, args.seed, args.n_samples, hparams.latent_dim)
     tester = make_tester(os.path.join(args.dpath, "inference"), args.seed)
     tester.test(net, data_test)
 
