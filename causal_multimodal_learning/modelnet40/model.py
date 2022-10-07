@@ -156,7 +156,7 @@ class InferenceNetwork(pl.LightningModule):
         conditional_logp = interventional_logp = 0
         for _ in range(self.n_iters):
             z = posterior_x_dist.sample((self.n_samples_per_batch,))
-            y_logp = -F.cross_entropy(self.decoder(x0_rep, x1_rep, z), y_rep, reduction="none")
+            y_logp = -F.cross_entropy(self.vae.decoder(x0_rep, x1_rep, z), y_rep, reduction="none")
             conditional_logp += -torch.log(torch.tensor(self.n_samples_per_batch)) + torch.logsumexp(y_logp, 0).item()
             interventional_logp += -torch.log(torch.tensor(self.n_samples_per_batch)) + torch.logsumexp(
                 self.prior.log_prob(z) - posterior_x_dist.log_prob(z) + y_logp, 0).item()
