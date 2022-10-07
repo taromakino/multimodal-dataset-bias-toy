@@ -6,12 +6,12 @@ import torch.nn.functional as F
 from utils.nn_utils import MLP, device, load_model
 from utils.stats import make_gaussian, prior_kld
 from torch.optim import AdamW
-from torchvision.models import resnet18, ResNet18_Weights
+from torchvision.models import resnet50, ResNet50_Weights
 
 N_CLASSES = 40
 
 def make_resnet_embedder():
-    model = resnet18(weights=ResNet18_Weights.DEFAULT)
+    model = resnet50(weights=ResNet50_Weights.DEFAULT)
     embed_dim = model.fc.in_features
     model.fc = nn.Identity(embed_dim)
     return model, embed_dim
