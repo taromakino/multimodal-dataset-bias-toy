@@ -44,6 +44,12 @@ def make_trainer(dpath, seed, n_epochs, patience):
         max_epochs=n_epochs,
         accelerator="gpu" if torch.cuda.is_available() else "cpu")
 
+def make_tester(dpath, seed):
+    return pl.Trainer(
+        logger=CSVLogger(dpath, name=None, version=seed),
+        max_epochs=1,
+        accelerator="gpu" if torch.cuda.is_available() else "cpu")
+
 def load_model(model_class, dpath):
     ckpt_fpath = os.path.join(dpath, os.listdir(dpath)[0])
     return model_class.load_from_checkpoint(ckpt_fpath)
