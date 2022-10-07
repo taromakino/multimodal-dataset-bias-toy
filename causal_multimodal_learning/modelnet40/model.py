@@ -134,12 +134,10 @@ class SemiSupervisedVae(pl.LightningModule):
         return AdamW(self.parameters(), lr=self.lr, weight_decay=self.wd)
 
 class InferenceNetwork(pl.LightningModule):
-    def __init__(self, dpath, seed, n_samples, n_samples_per_batch, latent_dim):
+    def __init__(self, dpath, seed, n_samples, latent_dim):
         super().__init__()
         self.save_hyperparameters()
         self.n_samples = n_samples
-        self.n_samples_per_batch = n_samples_per_batch
-        self.n_iters = n_samples // n_samples_per_batch
         self.vae = load_model(SemiSupervisedVae, os.path.join(dpath, "vae", f"version_{seed}", "checkpoints"))
         self.posterior_x = load_model(PosteriorX, os.path.join(dpath, "posterior_x", f"version_{seed}", "checkpoints"))
         self.prior = make_gaussian(torch.zeros(latent_dim, device=device())[None], torch.zeros(latent_dim,
@@ -150,15 +148,13 @@ class InferenceNetwork(pl.LightningModule):
         assert len(x0) == 1  # Assumes batch_size=1
         mu_x, logvar_x = self.posterior_x.encoder_x(x0, x1)
         posterior_x_dist = make_gaussian(mu_x, logvar_x)
-        x0_rep = torch.repeat_interleave(x0, repeats=self.n_samples_per_batch, dim=0)
-        x1_rep = torch.repeat_interleave(x1, repeats=self.n_samples_per_batch, dim=0)
-        y_rep = torch.repeat_interleave(y, repeats=self.n_samples_per_batch, dim=0)
-        conditional_logp = interventional_logp = 0
-        for _ in range(self.n_iters):
-            z = posterior_x_dist.sample((self.n_samples_per_batch,))
-            y_logp = -F.cross_entropy(self.vae.decoder(x0_rep, x1_rep, z), y_rep, reduction="none")
-            conditional_logp += -torch.log(torch.tensor(self.n_samples_per_batch)) + torch.logsumexp(y_logp, 0).item()
-            interventional_logp += -torch.log(torch.tensor(self.n_samples_per_batch)) + torch.logsumexp(
-                self.prior.log_prob(z) - posterior_x_dist.log_prob(z) + y_logp, 0).item()
+        x0_rep = torch.repeat_interleave(x0, repeats=self.n_samples, dim=0)
+        x1_rep = torch.repeat_interleave(x1, repeats=self.n_samples, dim=0)
+        y_rep = torch.repeat_interleave(y, repeats=self.n_samples, dim=0)
+        z = posterior_x_dist.sample((self.n_samples,))
+        y_logp = -F.cross_entropy(self.vae.decoder(x0_rep, x1_rep, z), y_rep, reduction="none")
+        conditional_logp = -torch.log(torch.tensor(self.n_samples)) + torch.logsumexp(y_logp, 0).item()
+        interventional_logp = -torch.log(torch.tensor(self.n_samples)) + torch.logsumexp(
+            self.prior.log_prob(z) - posterior_x_dist.log_prob(z) + y_logp, 0).item()
         self.log("conditional_logp", conditional_logp, on_step=True, on_epoch=True)
         self.log("interventional_logp", interventional_logp, on_step=True, on_epoch=True)
