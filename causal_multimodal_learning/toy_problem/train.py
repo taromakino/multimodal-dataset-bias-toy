@@ -25,7 +25,7 @@ if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument("--dpath", type=str, default="results")
     parser.add_argument("--seed", type=int, default=0)
-    parser.add_argument("--n_examples", nargs="+", type=int, default=[8000, 1000, 1000])
+    parser.add_argument("--n_examples", nargs="+", type=int, default=[10000, 1000, 1000])
     parser.add_argument("--data_dim", type=int, default=1)
     parser.add_argument("--u_mult", type=float, default=0)
     parser.add_argument("--hidden_dims", nargs="+", type=int, default=[16, 16])
