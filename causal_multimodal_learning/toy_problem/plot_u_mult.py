@@ -26,6 +26,7 @@ def main(args):
 
 if __name__ == "__main__":
     parser = ArgumentParser()
+    parser.add_argument("--dpath", type=str, default="results")
     parser.add_argument("--n_seeds", type=int, default=5)
     parser.add_argument("--u_mult_range", nargs="+", type=str, default=["4.0", "2.0", "1.0", "0.0"])
     main(parser.parse_args())
