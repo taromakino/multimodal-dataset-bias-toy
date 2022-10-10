@@ -17,7 +17,7 @@ def main(args):
     vae_trainer.test(vae, data_test)
     posterior_x = PosteriorX(args.data_dim, args.hidden_dims, args.latent_dim, args.lr_posterior_x, args.wd, args.batch_size)
     posterior_x.encoder_xy.load_state_dict(vae.encoder.state_dict())
-    posterior_x_trainer = make_trainer(os.path.join(args.dpath, "posterior_x"), seed, -1, args.patience)
+    posterior_x_trainer = make_trainer(os.path.join(args.dpath, "posterior_x"), seed, args.n_epochs, args.patience)
     posterior_x_trainer.fit(posterior_x, data_train, data_val)
     posterior_x_trainer.test(posterior_x, data_test)
 
@@ -33,6 +33,7 @@ if __name__ == "__main__":
     parser.add_argument("--lr_vae", type=float, default=1e-3)
     parser.add_argument("--lr_posterior_x", type=float, default=1e-3)
     parser.add_argument("--wd", type=float, default=1e-5)
+    parser.add_argument("--n_epochs", type=int, default=-1)
     parser.add_argument("--patience", type=int, default=20)
     parser.add_argument("--batch_size", type=int, default=32)
     parser.add_argument("--n_workers", type=int, default=20)
