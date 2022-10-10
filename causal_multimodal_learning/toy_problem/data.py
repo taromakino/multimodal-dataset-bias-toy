@@ -2,16 +2,6 @@ import numpy as np
 import torch
 from torch.utils.data import DataLoader, TensorDataset
 
-def split_data(trainval_ratios, *arrays):
-    n_train, n_val = [int(len(arrays[0]) * split_ratio) for split_ratio in trainval_ratios]
-    arrays_train = [array[:n_train] for array in arrays]
-    arrays_val = [array[n_train:n_train + n_val] for array in arrays]
-    if sum(trainval_ratios) == 1:
-        return arrays_train, arrays_val
-    else:
-        arrays_test = [array[n_train + n_val:] for array in arrays]
-        return arrays_train, arrays_val, arrays_test
-
 def normalize(x_train, x_val, x_test):
     x_mean, x_sd = x_train.mean(axis=0), x_train.std(axis=0)
     x_train = (x_train - x_mean) / x_sd
@@ -48,10 +38,12 @@ def make_dataset(seed, n_examples, data_dim, u_mult):
     y = x0 + x1 + u_mult * u + y_noise
     return x0, x1, y
 
-def make_data(seed, n_examples, data_dim, u_mult, trainval_ratios, batch_size, n_workers):
-    x0, x1, y = make_dataset(seed, n_examples, data_dim, u_mult)
-    (x0_train, x1_train, y_train), (x0_val, x1_val, y_val), (x0_test, x1_test, y_test) = \
-        split_data(trainval_ratios, x0, x1, y)
+def make_data(seed, n_examples, data_dim, u_mult, batch_size, n_workers):
+    n_train, n_val, n_test = n_examples
+    x0, x1, y = make_dataset(seed, sum(n_examples), data_dim, u_mult)
+    x0_train, x1_train, y_train = x0[:n_train], x1[:n_train], y[:n_train]
+    x0_val, x1_val, y_val = x0[n_train:(n_train + n_val)], x1[n_train:(n_train + n_val)], y[n_train:(n_train + n_val)]
+    x0_test, x1_test, y_test = x0[n_train + n_val:], x1[n_train + n_val:], y[n_train + n_val:]
 
     x0_train, x0_val, x0_test = normalize(x0_train, x0_val, x0_test)
     x1_train, x1_val, x1_test = normalize(x1_train, x1_val, x1_test)
