@@ -34,16 +34,15 @@ def main(args):
                 mu_x, logvar_x = posterior_x.encoder_x(x0, x1)
                 posterior_x_dist = make_gaussian(mu_x, logvar_x)
                 z = posterior_x_dist.sample((args.n_samples,))
-                if len(z.shape) == 1:
-                    z = z[:, None]
 
                 x0_rep = torch.repeat_interleave(x0, repeats=args.n_samples, dim=0)
                 x1_rep = torch.repeat_interleave(x1, repeats=args.n_samples, dim=0)
 
-                y_mu, y_logvar = vae.decoder(x0_rep, x1_rep, z)
+                y_mu, y_logvar = vae.decoder(x0_rep, x1_rep, z[:, None] if len(z.shape) == 1 else z)
                 decoder_dist = make_gaussian(y_mu, y_logvar)
                 y_logp = decoder_dist.log_prob(y.squeeze())
 
+                z = z.squeeze()
                 confounded_logp += -torch.log(torch.tensor(args.n_samples)) + torch.logsumexp(y_logp, 0).item()
                 deconfounded_logp += -torch.log(torch.tensor(args.n_samples)) + torch.logsumexp(prior.log_prob(z) -
                     posterior_x_dist.log_prob(z) + y_logp, 0).item()
