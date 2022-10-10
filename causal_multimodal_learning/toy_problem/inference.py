@@ -19,7 +19,7 @@ def main(args):
         for seed in range(args.n_seeds):
             pl.seed_everything(seed)
             hparams = load_file(os.path.join(args.dpath, "args.pkl"))
-            _, _, data_test = make_data(seed, hparams.n_examples, hparams.data_dim, u_mult, hparams.trainval_ratios, 1,
+            _, _, data_test = make_data(seed, hparams.n_examples, hparams.data_dim, float(u_mult), hparams.trainval_ratios, 1,
                 args.n_workers)
 
             vae = load_model(SemiSupervisedVae, os.path.join(args.dpath, "vae", f"version_{seed}", "checkpoints"))
