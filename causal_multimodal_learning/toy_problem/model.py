@@ -1,7 +1,8 @@
+import os
 import pytorch_lightning as pl
 import torch
 import torch.nn as nn
-from utils.nn_utils import MLP, device
+from utils.nn_utils import MLP, device, load_model
 from utils.stats import gaussian_nll, make_gaussian, prior_kld
 from torch.optim import AdamW
 
@@ -94,3 +95,30 @@ class SemiSupervisedVae(pl.LightningModule):
 
     def configure_optimizers(self):
         return AdamW(self.parameters(), lr=self.lr, weight_decay=self.wd)
+    
+class InferenceNetwork(pl.LightningModule):
+    def __init__(self, dpath, seed, n_samples, latent_dim):
+        super().__init__()
+        self.save_hyperparameters()
+        self.n_samples = n_samples
+        self.vae = load_model(SemiSupervisedVae, os.path.join(dpath, "vae", f"version_{seed}", "checkpoints"))
+        self.posterior_x = load_model(PosteriorX, os.path.join(dpath, "posterior_x", f"version_{seed}", "checkpoints"))
+        self.prior = make_gaussian(torch.zeros(latent_dim, device=device())[None], torch.zeros(latent_dim,
+            device=device())[None])
+
+    def test_step(self, batch, batch_idx):
+        x0, x1, y = batch
+        assert len(x0) == 1  # Assumes batch_size=1
+        mu_x, logvar_x = self.posterior_x.encoder_x(x0, x1)
+        posterior_x_dist = make_gaussian(mu_x, logvar_x)
+        x0_rep = torch.repeat_interleave(x0, repeats=self.n_samples, dim=0)
+        x1_rep = torch.repeat_interleave(x1, repeats=self.n_samples, dim=0)
+        z = posterior_x_dist.sample((self.n_samples,))
+        y_mu, y_logvar = self.vae.decoder(x0_rep, x1_rep, z[:, None] if len(z.shape) == 1 else z)
+        decoder_dist = make_gaussian(y_mu, y_logvar)
+        y_logp = decoder_dist.log_prob(y.squeeze())
+        conditional_logp = -torch.log(torch.tensor(self.n_samples)) + torch.logsumexp(y_logp, 0).item()
+        interventional_logp = -torch.log(torch.tensor(self.n_samples)) + torch.logsumexp(
+            self.prior.log_prob(z) - posterior_x_dist.log_prob(z) + y_logp, 0).item()
+        self.log("conditional_logp", conditional_logp, on_step=True, on_epoch=True)
+        self.log("interventional_logp", interventional_logp, on_step=True, on_epoch=True)
