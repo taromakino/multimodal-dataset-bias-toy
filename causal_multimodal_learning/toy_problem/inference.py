@@ -19,7 +19,7 @@ if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument("--dpath", type=str, default="results")
     parser.add_argument("--seed", type=int, default=0)
-    parser.add_argument("--u_mult", type=int, default=0)
+    parser.add_argument("--u_mult", type=float, default=0)
     parser.add_argument("--n_samples", type=int, default=1000)
     parser.add_argument("--n_workers", type=int, default=20)
     main(parser.parse_args())
