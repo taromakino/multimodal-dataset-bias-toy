@@ -34,6 +34,9 @@ def main(args):
                 mu_x, logvar_x = posterior_x.encoder_x(x0, x1)
                 posterior_x_dist = make_gaussian(mu_x, logvar_x)
                 z = posterior_x_dist.sample((args.n_samples,))
+                if len(z.shape) == 1:
+                    z = z[:, None]
+
                 x0_rep = torch.repeat_interleave(x0, repeats=args.n_samples, dim=0)
                 x1_rep = torch.repeat_interleave(x1, repeats=args.n_samples, dim=0)
 
