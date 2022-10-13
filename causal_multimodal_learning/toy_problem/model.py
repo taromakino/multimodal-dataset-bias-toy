@@ -52,17 +52,17 @@ class Model(pl.LightningModule):
 
     def inference(self, x0, x1, y):
         assert len(x0) == 1  # Assumes batch_size=1
-        mu_x, logvar_x = self.encoder_x(x0, x1)
-        posterior_x_dist = make_gaussian(mu_x, logvar_x)
         x0_rep = torch.repeat_interleave(x0, repeats=self.n_samples, dim=0)
         x1_rep = torch.repeat_interleave(x1, repeats=self.n_samples, dim=0)
+        mu_x, logvar_x = self.encoder_x(x0, x1)
+        posterior_x_dist = make_gaussian(mu_x, logvar_x)
         z = posterior_x_dist.sample((self.n_samples,))
-        y_mu, y_logvar = self.decoder(x0_rep, x1_rep, z[:, None] if len(z.shape) == 1 else z)
-        decoder_dist = make_gaussian(y_mu, y_logvar)
-        y_logp = decoder_dist.log_prob(y.squeeze())
-        conditional_logp = -torch.log(torch.tensor(self.n_samples)) + torch.logsumexp(y_logp, 0).item()
+        mu_reconst, logvar_reconst = self.decoder(x0_rep, x1_rep, z[:, None] if len(z.shape) == 1 else z)
+        decoder_dist = make_gaussian(mu_reconst, logvar_reconst)
+        logp_y_xz = decoder_dist.log_prob(y.squeeze())
+        conditional_logp = -torch.log(torch.tensor(self.n_samples)) + torch.logsumexp(logp_y_xz, 0).item()
         interventional_logp = -torch.log(torch.tensor(self.n_samples)) + torch.logsumexp(self.prior.log_prob(z) -
-            posterior_x_dist.log_prob(z) + y_logp, 0).item()
+            posterior_x_dist.log_prob(z) + logp_y_xz, 0).item()
         return conditional_logp, interventional_logp
 
     def training_step(self, batch, batch_idx):
@@ -71,10 +71,10 @@ class Model(pl.LightningModule):
 
     def validation_step(self, batch, batch_idx):
         reconst_loss, kld_loss, posterior_loss = self.loss(*batch)
-        self.log("val_elbo_loss", (reconst_loss + kld_loss).mean(), on_step=False, on_epoch=True)
+        self.log("val_loss", (reconst_loss + kld_loss).mean(), on_step=False, on_epoch=True)
         self.log("val_kld_loss", kld_loss.mean(), on_step=False, on_epoch=True)
         conditional_logp, interventional_logp = self.inference(*batch)
-        self.log("val_loss", -conditional_logp, on_step=False, on_epoch=True) # Minimize -log p
+        self.log("val_conditional_logp", conditional_logp, on_step=False, on_epoch=True) # Minimize -log p
         self.log("val_interventional_logp", interventional_logp, on_step=False, on_epoch=True)
 
     def test_step(self, batch, batch_idx):

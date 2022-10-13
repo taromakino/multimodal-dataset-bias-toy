@@ -20,7 +20,7 @@ def main(args):
         interventional_sds.append(np.std(interventional))
     fig, ax = plt.subplots(1, 1, figsize=(10, 5))
     ax.errorbar(np.arange(len(args.u_mult_range)), conditional_means, conditional_sds, label=r"$\log p(y \mid x, x')$")
-    ax.errorbar(np.arange(len(args.u_mult_range)) + 0.05, interventional_means, interventional_sds,
+    ax.errorbar(np.arange(len(args.u_mult_range)) + 0.01, interventional_means, interventional_sds,
         label=r"$\log p(y \mid do(x), do(x'))$")
     plt.savefig(os.path.join(args.dpath, "fig.pdf"))
 
