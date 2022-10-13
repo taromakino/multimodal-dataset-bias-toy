@@ -2,6 +2,7 @@ import torch
 import torch.distributions
 from torch.distributions.normal import Normal
 from torch.distributions.multivariate_normal import MultivariateNormal
+from utils.nn_utils import device
 
 def make_gaussian(mu, logvar):
     '''
@@ -16,6 +17,11 @@ def make_gaussian(mu, logvar):
         cov_mat = torch.diag_embed(torch.exp(logvar), offset=0, dim1=-2, dim2=-1)
         dist = MultivariateNormal(loc=mu, covariance_matrix=cov_mat)
     return dist
+
+def make_standard_normal(batch_size, latent_dim):
+    mu = torch.zeros(batch_size, latent_dim, device=device())
+    logvar = torch.zeros(batch_size, latent_dim, device=device())
+    return make_gaussian(mu, logvar)
 
 def gaussian_nll(x, mu, logvar):
     dist = make_gaussian(mu, logvar)
