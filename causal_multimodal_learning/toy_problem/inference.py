@@ -17,3 +17,4 @@ if __name__ == "__main__":
     parser.add_argument("--dpath", type=str, default="results")
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--u_mult", type=float, default=0)
+    main(parser.parse_args())
