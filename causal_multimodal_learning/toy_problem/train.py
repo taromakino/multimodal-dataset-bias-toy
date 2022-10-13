@@ -11,7 +11,7 @@ def main(args):
     save_file(args, os.path.join(args.dpath, "args.pkl"))
     pl.seed_everything(seed)
     data_train, data_val, data_test = make_data(seed, args.n_examples, args.data_dim, args.u_mult, args.batch_size, args.n_workers)
-    model = Model(args.data_dim, args.hidden_dims, args.latent_dim, args.n_samples, args.lr, args.wd)
+    model = Model(args.data_dim, args.hidden_dims, args.latent_dim, args.beta, args.n_samples, args.lr, args.wd)
     trainer = make_trainer(args.dpath, seed, args.n_epochs, args.patience)
     trainer.fit(model, data_train, data_val)
     trainer.test(model, data_test)

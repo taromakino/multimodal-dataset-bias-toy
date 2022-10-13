@@ -17,11 +17,11 @@ class GaussianNetwork(nn.Module):
         return mu, logvar
 
 class Model(pl.LightningModule):
-    def __init__(self, data_dim, beta, hidden_dims, latent_dim, n_samples, lr, wd):
+    def __init__(self, data_dim, hidden_dims, latent_dim, beta, n_samples, lr, wd):
         super().__init__()
         self.save_hyperparameters()
-        self.n_samples = n_samples
         self.beta = beta
+        self.n_samples = n_samples
         self.lr = lr
         self.wd = wd
         self.encoder_xy = GaussianNetwork(3 * data_dim, hidden_dims, latent_dim)
