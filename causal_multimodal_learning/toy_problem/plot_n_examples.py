@@ -12,8 +12,8 @@ def main(args):
         for seed in range(args.n_seeds):
             fpath = os.path.join(args.dpath, f"n={n_train}", "inference", "u=0", f"version_{seed}", "metrics.csv")
             df = pd.read_csv(fpath)
-            conditional.append(df.conditional_logp_epoch.iloc[-1])
-            interventional.append(df.interventional_logp_epoch.iloc[-1])
+            conditional.append(df.test_conditional_logp.iloc[-1])
+            interventional.append(df.test_interventional_logp.iloc[-1])
         conditional_means.append(np.mean(conditional))
         conditional_sds.append(np.std(conditional))
         interventional_means.append(np.mean(interventional))
