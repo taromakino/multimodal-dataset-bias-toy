@@ -74,7 +74,7 @@ class Model(pl.LightningModule):
         self.log("val_elbo_loss", (reconst_loss + kld_loss).mean(), on_step=False, on_epoch=True)
         self.log("val_kld_loss", kld_loss.mean(), on_step=False, on_epoch=True)
         conditional_logp, interventional_logp = self.inference(*batch)
-        self.log("val_conditional_logp", conditional_logp, on_step=True, on_epoch=True)
+        self.log("val_loss", -conditional_logp, on_step=True, on_epoch=True) # Minimize -log p
         self.log("val_interventional_logp", interventional_logp, on_step=True, on_epoch=True)
 
     def test_step(self, batch, batch_idx):
