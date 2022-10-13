@@ -23,6 +23,7 @@ if __name__ == "__main__":
     parser.add_argument("--n_examples", nargs="+", type=int, default=[10000, 1000, 1000])
     parser.add_argument("--data_dim", type=int, default=1)
     parser.add_argument("--u_mult", type=float, default=0)
+    parser.add_argument("--beta", type=float, default=1)
     parser.add_argument("--hidden_dims", nargs="+", type=int, default=[16, 16])
     parser.add_argument("--latent_dim", type=int, default=1)
     parser.add_argument("--n_samples", type=int, default=1000)

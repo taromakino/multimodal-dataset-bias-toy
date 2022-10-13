@@ -17,10 +17,11 @@ class GaussianNetwork(nn.Module):
         return mu, logvar
 
 class Model(pl.LightningModule):
-    def __init__(self, data_dim, hidden_dims, latent_dim, n_samples, lr, wd):
+    def __init__(self, data_dim, beta, hidden_dims, latent_dim, n_samples, lr, wd):
         super().__init__()
         self.save_hyperparameters()
         self.n_samples = n_samples
+        self.beta = beta
         self.lr = lr
         self.wd = wd
         self.encoder_xy = GaussianNetwork(3 * data_dim, hidden_dims, latent_dim)
@@ -71,16 +72,13 @@ class Model(pl.LightningModule):
 
     def validation_step(self, batch, batch_idx):
         reconst_loss, kld_loss, posterior_loss = self.loss(*batch)
-        self.log("val_loss", (reconst_loss + kld_loss).mean(), on_step=False, on_epoch=True)
+        self.log("val_elbo_loss", (reconst_loss + self.beta * kld_loss).mean(), on_step=False, on_epoch=True)
         self.log("val_kld_loss", kld_loss.mean(), on_step=False, on_epoch=True)
         conditional_logp, interventional_logp = self.inference(*batch)
-        self.log("val_conditional_logp", conditional_logp, on_step=False, on_epoch=True) # Minimize -log p
+        self.log("val_loss", -conditional_logp, on_step=False, on_epoch=True) # Minimize -log p
         self.log("val_interventional_logp", interventional_logp, on_step=False, on_epoch=True)
 
     def test_step(self, batch, batch_idx):
-        reconst_loss, kld_loss, posterior_loss = self.loss(*batch)
-        self.log("test_elbo_loss", (reconst_loss + kld_loss).mean(), on_step=False, on_epoch=True)
-        self.log("test_kld_loss", kld_loss.mean(), on_step=False, on_epoch=True)
         conditional_logp, interventional_logp = self.inference(*batch)
         self.log("test_conditional_logp", conditional_logp, on_step=False, on_epoch=True)
         self.log("test_interventional_logp", interventional_logp, on_step=False, on_epoch=True)
