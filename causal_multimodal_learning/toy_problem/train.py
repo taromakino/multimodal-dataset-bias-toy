@@ -12,7 +12,7 @@ def main(args):
     pl.seed_everything(seed)
     data_train, data_val, data_test = make_data(seed, args.n_examples, args.data_dim, args.u_mult, args.batch_size, args.n_workers)
     vae = Model(args.data_dim, args.hidden_dims, args.latent_dim, args.n_samples, args.lr_vae, args.wd)
-    vae_trainer = make_trainer(os.path.join(args.dpath, "vae"), seed, args.n_epochs, args.patience)
+    vae_trainer = make_trainer(args.dpath, seed, args.n_epochs, args.patience)
     vae_trainer.fit(vae, data_train, data_val)
     vae_trainer.test(vae, data_test)
 
