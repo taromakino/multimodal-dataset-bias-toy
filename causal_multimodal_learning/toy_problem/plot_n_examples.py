@@ -10,7 +10,7 @@ def main(args):
     for n_train in args.n_train_range:
         conditional, interventional = [], []
         for seed in range(args.n_seeds):
-            fpath = os.path.join(args.dpath, f"n={n_train}", "inference", "u=0", f"version_{seed}", "metrics.csv")
+            fpath = os.path.join(args.dpath, f"n={n_train}", f"version_{seed}", "metrics.csv")
             df = pd.read_csv(fpath)
             conditional.append(df.test_conditional_logp.iloc[-1])
             interventional.append(df.test_interventional_logp.iloc[-1])
