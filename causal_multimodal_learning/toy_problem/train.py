@@ -14,7 +14,7 @@ def main(args):
     model = Model(args.data_dim, args.hidden_dims, args.latent_dim, args.beta, args.n_samples, args.lr, args.wd)
     trainer = make_trainer(args.dpath, seed, args.n_epochs, args.patience)
     trainer.fit(model, data_train, data_val)
-    trainer.test(model, data_test)
+    trainer.test(model, data_test, ckpt_path="best")
 
 if __name__ == "__main__":
     parser = ArgumentParser()
