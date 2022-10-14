@@ -23,15 +23,16 @@ def make_dataloader(data_tuple, batch_size, n_workers, is_train):
 def make_dataset(seed, n_examples, data_dim, u_mult):
     rng = np.random.RandomState(seed)
     if data_dim == 1:
-        u = rng.exponential(size=n_examples).astype("float32")
+        u = rng.normal(size=n_examples).astype("float32")
         x0_noise = rng.normal(size=n_examples).astype("float32")
         x1_noise = rng.normal(size=n_examples).astype("float32")
-        y_noise = rng.normal(size=n_examples).astype("float32")
+        y_noise = rng.normal(loc=0, scale=0.1, size=n_examples).astype("float32")
     else:
         u = rng.multivariate_normal(mean=np.zeros(data_dim), cov=np.eye(data_dim), size=n_examples).astype("float32")
         x0_noise = rng.multivariate_normal(mean=np.zeros(data_dim), cov=np.eye(data_dim), size=n_examples).astype("float32")
         x1_noise = rng.multivariate_normal(mean=np.zeros(data_dim), cov=np.eye(data_dim), size=n_examples).astype("float32")
-        y_noise = rng.multivariate_normal(mean=np.zeros(data_dim), cov=np.eye(data_dim), size=n_examples).astype("float32")
+        y_noise = rng.multivariate_normal(mean=np.zeros(data_dim), cov=np.diag(np.repeat(0.1**2, data_dim)),
+            size=n_examples).astype("float32")
     x0 = u + x0_noise
     x1 = u**2 + x1_noise
     y = x0 + x1 + u_mult * u + y_noise
