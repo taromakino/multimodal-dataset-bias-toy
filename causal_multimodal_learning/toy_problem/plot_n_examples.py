@@ -22,12 +22,17 @@ def main(args):
     ax.errorbar(np.arange(len(args.n_train_range)), conditional_means, conditional_sds, label=r"$\log p(y \mid x, x')$")
     ax.errorbar(np.arange(len(args.n_train_range)) + 0.01, interventional_means, interventional_sds,
         label=r"$\log p(y \mid do(x), do(x'))$")
+    ax.legend()
+    ax.set_xticks(np.arange(len(args.n_train_range)), args.n_train_range)
+    ax.set_xlabel("Training set size")
+    ax.set_ylabel("Log density")
+    fig.tight_layout()
     plt.savefig(os.path.join(args.dpath, "fig.pdf"))
 
 if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument("--dpath", type=str, default="results")
     parser.add_argument("--n_seeds", type=int, default=5)
-    parser.add_argument("--n_train_range", nargs="+", type=str, default=["100", "200", "400", "800"])
+    parser.add_argument("--n_train_range", nargs="+", type=str, default=["800", "400", "200", "100"])
     parser.add_argument("--data_dim", type=int, default=1)
     main(parser.parse_args())

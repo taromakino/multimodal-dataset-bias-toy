@@ -22,6 +22,11 @@ def main(args):
     ax.errorbar(np.arange(len(args.u_mult_range)), conditional_means, conditional_sds, label=r"$\log p(y \mid x, x')$")
     ax.errorbar(np.arange(len(args.u_mult_range)) + 0.01, interventional_means, interventional_sds,
         label=r"$\log p(y \mid do(x), do(x'))$")
+    ax.legend()
+    ax.set_xticks(np.arange(len(args.u_mult_range)), args.u_mult_range)
+    ax.set_xlabel(r"$\beta_U$")
+    ax.set_ylabel("Log density")
+    fig.tight_layout()
     plt.savefig(os.path.join(args.dpath, "fig.pdf"))
 
 if __name__ == "__main__":
