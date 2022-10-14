@@ -23,7 +23,7 @@ def make_dataloader(data_tuple, batch_size, n_workers, is_train):
 def make_dataset(seed, n_examples, data_dim, u_mult):
     rng = np.random.RandomState(seed)
     if data_dim == 1:
-        u = rng.normal(size=n_examples).astype("float32")
+        u = rng.exponential(size=n_examples).astype("float32")
         x0_noise = rng.normal(size=n_examples).astype("float32")
         x1_noise = rng.normal(size=n_examples).astype("float32")
         y_noise = rng.normal(size=n_examples).astype("float32")
