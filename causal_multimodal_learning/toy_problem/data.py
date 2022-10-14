@@ -20,7 +20,7 @@ def make_dataloader(data_tuple, batch_size, n_workers, is_train):
     return DataLoader(TensorDataset(*data_tuple), shuffle=is_train, batch_size=batch_size, num_workers=n_workers,
         pin_memory=True, persistent_workers=True)
 
-def make_dataset(seed, n_examples, data_dim, u_mult):
+def make_dataset(seed, n_examples, data_dim):
     rng = np.random.RandomState(seed)
     if data_dim == 1:
         u = rng.normal(size=n_examples).astype("float32")
@@ -35,14 +35,14 @@ def make_dataset(seed, n_examples, data_dim, u_mult):
             size=n_examples).astype("float32")
     x0 = u + x0_noise
     x1 = u**2 + x1_noise
-    y = x0 + x1 + u_mult * u + y_noise
+    y = x0 + x1 + y_noise
     return x0, x1, y
 
-def make_data(seed, n_examples, data_dim, u_mult, batch_size, n_workers):
+def make_data(seed, n_examples, data_dim, batch_size, n_workers):
     n_train, n_val, n_test = n_examples
-    x0_train, x1_train, y_train = make_dataset(seed, n_train, data_dim, u_mult)
-    x0_val, x1_val, y_val = make_dataset(seed, n_val, data_dim, u_mult)
-    x0_test, x1_test, y_test = make_dataset(seed, n_test, data_dim, u_mult)
+    x0_train, x1_train, y_train = make_dataset(seed, n_train, data_dim)
+    x0_val, x1_val, y_val = make_dataset(seed, n_val, data_dim)
+    x0_test, x1_test, y_test = make_dataset(seed, n_test, data_dim)
 
     x0_train, x0_val, x0_test = normalize(x0_train, x0_val, x0_test)
     x1_train, x1_val, x1_test = normalize(x1_train, x1_val, x1_test)
