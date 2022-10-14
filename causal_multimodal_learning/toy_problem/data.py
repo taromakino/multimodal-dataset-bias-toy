@@ -40,10 +40,9 @@ def make_dataset(seed, n_examples, data_dim, u_mult):
 
 def make_data(seed, n_examples, data_dim, u_mult, batch_size, n_workers):
     n_train, n_val, n_test = n_examples
-    x0, x1, y = make_dataset(seed, sum(n_examples), data_dim, u_mult)
-    x0_train, x1_train, y_train = x0[:n_train], x1[:n_train], y[:n_train]
-    x0_val, x1_val, y_val = x0[n_train:(n_train + n_val)], x1[n_train:(n_train + n_val)], y[n_train:(n_train + n_val)]
-    x0_test, x1_test, y_test = x0[n_train + n_val:], x1[n_train + n_val:], y[n_train + n_val:]
+    x0_train, x1_train, y_train = make_dataset(seed, n_train, data_dim, u_mult)
+    x0_val, x1_val, y_val = make_dataset(seed, n_val, data_dim, u_mult)
+    x0_test, x1_test, y_test = make_dataset(seed, n_test, data_dim, u_mult)
 
     x0_train, x0_val, x0_test = normalize(x0_train, x0_val, x0_test)
     x1_train, x1_val, x1_test = normalize(x1_train, x1_val, x1_test)
