@@ -68,11 +68,11 @@ class Model(pl.LightningModule):
 
     def training_step(self, batch, batch_idx):
         reconst_loss, kld_loss, posterior_loss = self.loss(*batch)
-        return (reconst_loss + kld_loss + posterior_loss).mean()
+        return (reconst_loss + self.beta * kld_loss + posterior_loss).mean()
 
     def validation_step(self, batch, batch_idx):
         reconst_loss, kld_loss, posterior_loss = self.loss(*batch)
-        self.log("val_elbo_loss", (reconst_loss + self.beta * kld_loss).mean(), on_step=False, on_epoch=True)
+        self.log("val_elbo_loss", (reconst_loss + kld_loss).mean(), on_step=False, on_epoch=True)
         self.log("val_kld_loss", kld_loss.mean(), on_step=False, on_epoch=True)
         conditional_logp, interventional_logp = self.inference(*batch)
         self.log("val_loss", -conditional_logp, on_step=False, on_epoch=True) # Minimize -log p
