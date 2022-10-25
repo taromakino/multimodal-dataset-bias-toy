@@ -1,5 +1,6 @@
 import numpy as np
 import torch
+from scipy.stats import ks_2samp
 from torch.utils.data import DataLoader, TensorDataset
 
 def normalize(x_train, x_val, x_test):
@@ -36,13 +37,14 @@ def make_dataset(seed, n_examples, data_dim):
     x0 = u + x0_noise
     x1 = u**2 + x1_noise
     y = x0 + x1 + y_noise
-    return x0, x1, y
+    return x0, x1, y, u
 
 def make_data(seed, n_examples, data_dim, batch_size, n_workers):
     n_train, n_val, n_test = n_examples
-    x0_train, x1_train, y_train = make_dataset(seed, n_train, data_dim)
-    x0_val, x1_val, y_val = make_dataset(seed, n_val, data_dim)
-    x0_test, x1_test, y_test = make_dataset(seed, n_test, data_dim)
+    x0_train, x1_train, y_train, u_train = make_dataset(seed, n_train, data_dim)
+    x0_val, x1_val, y_val, u_val = make_dataset(seed, n_val, data_dim)
+    x0_test, x1_test, y_test, u_test = make_dataset(seed, n_test, data_dim)
+    ks = ks_2samp(u_train, u_test)
 
     x0_train, x0_val, x0_test = normalize(x0_train, x0_val, x0_test)
     x1_train, x1_val, x1_test = normalize(x1_train, x1_val, x1_test)
@@ -55,4 +57,4 @@ def make_data(seed, n_examples, data_dim, batch_size, n_workers):
     data_train = make_dataloader((x0_train, x1_train, y_train), batch_size, n_workers, True)
     data_val = make_dataloader((x0_val, x1_val, y_val), 1, n_workers, False)
     data_test = make_dataloader((x0_test, x1_test, y_test), 1, n_workers, False)
-    return data_train, data_val, data_test
+    return data_train, data_val, data_test, ks

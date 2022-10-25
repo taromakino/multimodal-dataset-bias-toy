@@ -2,7 +2,7 @@ import pytorch_lightning as pl
 import torch
 import torch.nn as nn
 from utils.nn_utils import MLP
-from utils.stats import gaussian_nll, make_gaussian, make_standard_normal, prior_kld
+from utils.stats import conditional_logpy_x, interventional_logpy_x, gaussian_nll, make_gaussian, make_standard_normal, prior_kld
 from torch.optim import AdamW
 
 class GaussianNetwork(nn.Module):
@@ -61,9 +61,8 @@ class Model(pl.LightningModule):
         mu_reconst, logvar_reconst = self.decoder(x0_rep, x1_rep, z[:, None] if len(z.shape) == 1 else z)
         decoder_dist = make_gaussian(mu_reconst, logvar_reconst)
         logp_y_xz = decoder_dist.log_prob(y.squeeze())
-        conditional_logp = -torch.log(torch.tensor(self.n_samples)) + torch.logsumexp(logp_y_xz, 0).item()
-        interventional_logp = -torch.log(torch.tensor(self.n_samples)) + torch.logsumexp(self.prior.log_prob(z) -
-            posterior_x_dist.log_prob(z) + logp_y_xz, 0).item()
+        conditional_logp = conditional_logpy_x(logp_y_xz)
+        interventional_logp = interventional_logpy_x(self.prior.log_prob(z), posterior_x_dist.log_prob(z), logp_y_xz)
         return conditional_logp, interventional_logp
 
     def training_step(self, batch, batch_idx):
