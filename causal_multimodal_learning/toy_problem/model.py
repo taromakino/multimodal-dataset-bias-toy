@@ -16,7 +16,33 @@ class GaussianNetwork(nn.Module):
         logvar = self.logvar_net(*args)
         return mu, logvar
 
-class Model(pl.LightningModule):
+class DiscriminativeModel(pl.LightningModule):
+    def __int__(self, data_dim, hidden_dims, lr, wd):
+        self.save_hyperparameters()
+        self.lr = lr
+        self.wd = wd
+        self.decoder = GaussianNetwork(2 * data_dim, hidden_dims, data_dim)
+
+    def loss(self, x0, x1, y):
+        mu_reconst, logvar_reconst = self.decoder(x0, x1)
+        return gaussian_nll(y, mu_reconst, logvar_reconst)
+
+    def training_step(self, batch, batch_idx):
+        loss = self.loss(*batch)
+        return loss.mean()
+
+    def validation_step(self, batch, batch_idx):
+        loss = self.loss(*batch)
+        self.log("val_loss", loss.mean(), on_step=False, on_epoch=True)
+
+    def test_step(self, batch, batch_idx):
+        loss = self.loss(*batch)
+        self.log("test_loss", loss.mean(), on_step=False, on_epoch=True)
+
+    def configure_optimizers(self):
+        return AdamW(self.parameters(), lr=self.lr, weight_decay=self.wd)
+
+class GenerativeModel(pl.LightningModule):
     def __init__(self, data_dim, hidden_dims, latent_dim, beta, n_samples, lr, wd):
         super().__init__()
         self.save_hyperparameters()
@@ -51,6 +77,10 @@ class Model(pl.LightningModule):
         posterior_loss = torch.distributions.kl_divergence(posterior_xy_dist, posterior_x_dist)
         return reconst_loss, kld_loss, posterior_loss
 
+    def training_step(self, batch, batch_idx):
+        reconst_loss, kld_loss, posterior_loss = self.loss(*batch)
+        return (reconst_loss + self.beta * kld_loss + posterior_loss).mean()
+
     def inference(self, x0, x1, y):
         assert len(x0) == 1  # Assumes batch_size=1
         x0_rep = torch.repeat_interleave(x0, repeats=self.n_samples, dim=0)
@@ -64,10 +94,6 @@ class Model(pl.LightningModule):
         conditional_logp = conditional_logpy_x(logp_y_xz)
         interventional_logp = interventional_logpy_x(self.prior.log_prob(z), posterior_x_dist.log_prob(z), logp_y_xz)
         return conditional_logp, interventional_logp
-
-    def training_step(self, batch, batch_idx):
-        reconst_loss, kld_loss, posterior_loss = self.loss(*batch)
-        return (reconst_loss + self.beta * kld_loss + posterior_loss).mean()
 
     def validation_step(self, batch, batch_idx):
         reconst_loss, kld_loss, posterior_loss = self.loss(*batch)

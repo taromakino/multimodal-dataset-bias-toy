@@ -4,14 +4,17 @@ from argparse import ArgumentParser
 from utils.file import save_file, write
 from utils.nn_utils import make_trainer
 from toy_problem.data import make_data
-from toy_problem.model import Model
+from toy_problem.model import DiscriminativeModel, GenerativeModel
 
 def main(args):
     seed = args.__dict__.pop("seed")
     save_file(args, os.path.join(args.dpath, "args.pkl"))
     pl.seed_everything(seed)
     data_train, data_val, data_test, ks = make_data(seed, args.n_examples, args.data_dim, args.batch_size, args.n_workers)
-    model = Model(args.data_dim, args.hidden_dims, args.latent_dim, args.beta, args.n_samples, args.lr, args.wd)
+    if args.is_discriminative:
+        model = DiscriminativeModel(args.data_dim, args.hidden_dims, args.lr, args.wd)
+    else:
+        model = GenerativeModel(args.data_dim, args.hidden_dims, args.latent_dim, args.beta, args.n_samples, args.lr, args.wd)
     trainer = make_trainer(args.dpath, seed, args.n_epochs, args.patience)
     trainer.fit(model, data_train, data_val)
     trainer.test(model, data_test, ckpt_path="best")
