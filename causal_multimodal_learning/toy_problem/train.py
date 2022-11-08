@@ -11,7 +11,7 @@ def main(args):
     save_file(args, os.path.join(args.dpath, "args.pkl"))
     pl.seed_everything(seed)
     data_train, data_val, data_test, ks = make_data(seed, args.n_examples, args.data_dim, args.batch_size, args.n_workers)
-    if args.is_discriminative:
+    if args.is_discrim:
         model = DiscriminativeModel(args.data_dim, args.hidden_dims, args.lr, args.wd)
     else:
         model = GenerativeModel(args.data_dim, args.hidden_dims, args.latent_dim, args.beta, args.n_samples, args.lr, args.wd)
@@ -36,4 +36,5 @@ if __name__ == "__main__":
     parser.add_argument("--patience", type=int, default=20)
     parser.add_argument("--batch_size", type=int, default=50)
     parser.add_argument("--n_workers", type=int, default=20)
+    parser.add_argument("--is_discrim", action="store_true")
     main(parser.parse_args())

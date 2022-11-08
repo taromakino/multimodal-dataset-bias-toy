@@ -17,7 +17,8 @@ class GaussianNetwork(nn.Module):
         return mu, logvar
 
 class DiscriminativeModel(pl.LightningModule):
-    def __int__(self, data_dim, hidden_dims, lr, wd):
+    def __init__(self, data_dim, hidden_dims, lr, wd):
+        super().__init__()
         self.save_hyperparameters()
         self.lr = lr
         self.wd = wd
