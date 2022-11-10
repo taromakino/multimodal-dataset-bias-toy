@@ -22,11 +22,11 @@ class DiscriminativeModel(pl.LightningModule):
         self.save_hyperparameters()
         self.lr = lr
         self.wd = wd
-        self.decoder = MLP(2 * data_dim, hidden_dims, data_dim)
+        self.decoder = GaussianNetwork(2 * data_dim, hidden_dims, data_dim)
 
     def loss(self, x0, x1, y):
-        mu_reconst = self.decoder(x0, x1)
-        return gaussian_nll(y, mu_reconst, torch.zeros_like(mu_reconst))
+        mu_reconst, logvar_reconst = self.decoder(x0, x1)
+        return gaussian_nll(y, mu_reconst, logvar_reconst)
 
     def training_step(self, batch, batch_idx):
         loss = self.loss(*batch)
@@ -53,7 +53,7 @@ class GenerativeModel(pl.LightningModule):
         self.wd = wd
         self.encoder_xy = GaussianNetwork(3 * data_dim, hidden_dims, latent_dim)
         self.encoder_x = GaussianNetwork(2 * data_dim, hidden_dims, latent_dim)
-        self.decoder = MLP(latent_dim + 2 * data_dim, hidden_dims, data_dim)
+        self.decoder = GaussianNetwork(latent_dim + 2 * data_dim, hidden_dims, data_dim)
         self.prior = make_standard_normal(1, latent_dim)
 
     def sample_z(self, mu, logvar):
@@ -68,8 +68,8 @@ class GenerativeModel(pl.LightningModule):
         # ELBO loss
         mu_xy, logvar_xy = self.encoder_xy(x0, x1, y)
         z = self.sample_z(mu_xy, logvar_xy)
-        mu_reconst = self.decoder(x0, x1, z)
-        reconst_loss = gaussian_nll(y, mu_reconst, torch.zeros_like(mu_reconst))
+        mu_reconst, logvar_reconst = self.decoder(x0, x1, z)
+        reconst_loss = gaussian_nll(y, mu_reconst, logvar_reconst)
         # KLD loss
         mu_x, logvar_x = self.encoder_x(x0, x1)
         posterior_xy_dist = make_gaussian(mu_xy, logvar_xy)
@@ -89,8 +89,8 @@ class GenerativeModel(pl.LightningModule):
         mu_x, logvar_x = self.encoder_x(x0, x1)
         posterior_x_dist = make_gaussian(mu_x, logvar_x)
         z = posterior_x_dist.sample((self.n_samples,))
-        mu_reconst = self.decoder(x0_rep, x1_rep, z[:, None] if len(z.shape) == 1 else z)
-        decoder_dist = make_gaussian(mu_reconst, torch.zeros_like(mu_reconst))
+        mu_reconst, logvar_reconst = self.decoder(x0_rep, x1_rep, z[:, None] if len(z.shape) == 1 else z)
+        decoder_dist = make_gaussian(mu_reconst, logvar_reconst)
         logp_y_xz = decoder_dist.log_prob(y.squeeze())
         conditional_logp = conditional_logpy_x(logp_y_xz)
         interventional_logp = interventional_logpy_x(self.prior.log_prob(z), posterior_x_dist.log_prob(z), logp_y_xz)
