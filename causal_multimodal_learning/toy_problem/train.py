@@ -10,7 +10,8 @@ def main(args):
     seed = args.__dict__.pop("seed")
     save_file(args, os.path.join(args.dpath, "args.pkl"))
     pl.seed_everything(seed)
-    data_train, data_val, data_test, ks = make_data(seed, args.n_examples, args.data_dim, args.batch_size, args.n_workers)
+    data_train, data_val, data_test, ks = make_data(seed, args.n_examples, args.train_ratio, args.data_dim,
+        args.batch_size, args.n_workers)
     if args.is_discrim:
         model = DiscriminativeModel(args.data_dim, args.hidden_dims, args.lr, args.wd)
     else:
@@ -24,7 +25,8 @@ if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument("--dpath", type=str, default="results")
     parser.add_argument("--seed", type=int, default=0)
-    parser.add_argument("--n_examples", nargs="+", type=int, default=[50, 500, 500])
+    parser.add_argument("--n_examples", nargs="+", type=int, default=[50, 1000])
+    parser.add_argument("--train_ratio", type=float, default=0.8)
     parser.add_argument("--data_dim", type=int, default=1)
     parser.add_argument("--beta", type=float, default=1)
     parser.add_argument("--hidden_dims", nargs="+", type=int, default=[20, 20])
