@@ -27,13 +27,12 @@ def make_dataset(seed, n_examples, data_dim):
         u = rng.normal(size=n_examples).astype("float32")
         x0_noise = rng.normal(size=n_examples).astype("float32")
         x1_noise = rng.normal(size=n_examples).astype("float32")
-        y_noise = rng.normal(loc=0, scale=0.1, size=n_examples).astype("float32")
+        y_noise = rng.normal(size=n_examples).astype("float32")
     else:
         u = rng.multivariate_normal(mean=np.zeros(data_dim), cov=np.eye(data_dim), size=n_examples).astype("float32")
         x0_noise = rng.multivariate_normal(mean=np.zeros(data_dim), cov=np.eye(data_dim), size=n_examples).astype("float32")
         x1_noise = rng.multivariate_normal(mean=np.zeros(data_dim), cov=np.eye(data_dim), size=n_examples).astype("float32")
-        y_noise = rng.multivariate_normal(mean=np.zeros(data_dim), cov=np.diag(np.repeat(0.1**2, data_dim)),
-            size=n_examples).astype("float32")
+        y_noise = rng.multivariate_normal(mean=np.zeros(data_dim), cov=np.eye(data_dim), size=n_examples).astype("float32")
     x0 = u + x0_noise
     x1 = u**2 + x1_noise
     y = x0 + x1 + y_noise
@@ -48,7 +47,7 @@ def make_data(seed, n_examples, train_ratio, data_dim, batch_size, n_workers):
     x0_val, x1_val, y_val, u_val = x0_trainval[n_train:], x1_trainval[n_train:], y_trainval[n_train:], \
         u_trainval[n_train:]
     x0_test, x1_test, y_test, u_test = make_dataset(2**32 - 1, n_test, data_dim)
-    ks = ks_2samp(u_train, u_test)
+    ks = ks_2samp(u_train, u_test).pvalue
 
     x0_train, x0_val, x0_test = normalize(x0_train, x0_val, x0_test)
     x1_train, x1_val, x1_test = normalize(x1_train, x1_val, x1_test)

@@ -19,7 +19,7 @@ def main(args):
     trainer = make_trainer(args.dpath, seed, args.n_epochs, args.patience)
     trainer.fit(model, data_train, data_val)
     trainer.test(model, data_test, ckpt_path="best")
-    write(os.path.join(args.dpath, f"version_{seed}", "ks.txt"), f"{ks}:.3f")
+    write(os.path.join(args.dpath, f"version_{seed}", "ks.txt"), f"{ks:.3f}")
 
 if __name__ == "__main__":
     parser = ArgumentParser()
