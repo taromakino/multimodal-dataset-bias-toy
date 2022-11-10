@@ -43,7 +43,7 @@ def make_data(seed, n_examples, data_dim, batch_size, n_workers):
     n_train, n_val, n_test = n_examples
     x0_train, x1_train, y_train, u_train = make_dataset(seed, n_train, data_dim)
     x0_val, x1_val, y_val, u_val = make_dataset(seed, n_val, data_dim)
-    x0_test, x1_test, y_test, u_test = make_dataset(seed, n_test, data_dim)
+    x0_test, x1_test, y_test, u_test = make_dataset(0, n_test, data_dim)
     ks = ks_2samp(u_train, u_test)
 
     x0_train, x0_val, x0_test = normalize(x0_train, x0_val, x0_test)
