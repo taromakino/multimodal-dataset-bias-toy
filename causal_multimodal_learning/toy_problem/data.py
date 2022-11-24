@@ -1,5 +1,6 @@
 import numpy as np
 import torch
+from scipy.special import expit as sigmoid
 from torch.utils.data import DataLoader, TensorDataset
 
 def normalize(x_train, x_val, x_test):
@@ -35,6 +36,14 @@ def make_dataset(seed, n_examples, data_dim, is_spurious):
     x0 = u + x0_noise
     x1 = u**2 + x1_noise
     y = x0 + x1 + y_noise
+    if is_spurious:
+        p = (u * y)
+        if len(p.shape) > 1:
+            p = p.sum(axis=1)
+        p = sigmoid(p)
+        v = rng.binomial(1, p)
+        idxs = np.where(v == 1)[0]
+        x0, x1, y, u = x0[idxs], x1[idxs], y[idxs], u[idxs]
     return x0, x1, y, u
 
 def make_data(seed, n_examples, train_ratio, data_dim, batch_size, n_workers):
