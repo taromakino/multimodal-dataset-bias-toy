@@ -80,6 +80,7 @@ class GenerativeModel(pl.LightningModule):
 
     def training_step(self, batch, batch_idx):
         reconst_loss, kld_loss, prior_kld_loss = self.loss(*batch)
+        self.log("train_prior_kld_loss", prior_kld_loss.mean(), on_step=False, on_epoch=True)  # Minimize -log p
         return (reconst_loss + kld_loss + self.beta * prior_kld_loss).mean()
 
     def inference(self, x0, x1, y):

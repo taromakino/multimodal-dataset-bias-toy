@@ -35,12 +35,6 @@ def make_dataset(seed, n_examples, data_dim, is_spurious):
     x0 = u + x0_noise
     x1 = u**2 + x1_noise
     y = x0 + x1 + y_noise
-    if is_spurious:
-        v = (u * y)
-        if len(v.shape) > 1:
-            v = v.sum(axis=1)
-        v = v > 0
-        x0, x1, y, u = x0[v], x1[v], y[v], u[v]
     return x0, x1, y, u
 
 def make_data(seed, n_examples, train_ratio, data_dim, batch_size, n_workers):
