@@ -35,8 +35,5 @@ def gaussian_kld(mu_p, logvar_p, mu_q, logvar_q):
 def prior_kld(mu, logvar):
     return -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp(), dim=1)
 
-def conditional_logpy_x(logp_y_xz):
-    return -torch.log(torch.tensor(len(logp_y_xz))) + torch.logsumexp(logp_y_xz, 0)
-
-def interventional_logpy_x(logp_z, logp_z_x, logp_y_xz):
-    return -torch.log(torch.tensor(len(logp_z))) + torch.logsumexp(logp_z - logp_z_x + logp_y_xz, 0)
+def log_avg_prob(x):
+    return -torch.log(torch.tensor(len(x))) + torch.logsumexp(x, 0)

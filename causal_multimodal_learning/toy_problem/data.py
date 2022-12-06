@@ -65,6 +65,6 @@ def make_data(seed, n_examples, train_ratio, data_dim, batch_size, n_workers):
     y_train, y_val, y_test = to_torch(y_train, y_val, y_test)
 
     data_train = make_dataloader((x0_train, x1_train, y_train), batch_size, n_workers, True)
-    data_val = make_dataloader((x0_val, x1_val, y_val), 1, n_workers, False)
+    data_val = make_dataloader((x0_val, x1_val, y_val), batch_size, n_workers, False)
     data_test = make_dataloader((x0_test, x1_test, y_test), 1, n_workers, False)
     return data_train, data_val, data_test

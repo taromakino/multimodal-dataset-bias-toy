@@ -1,9 +1,7 @@
-import pytorch_lightning as pl
 import torch
 import torch.nn as nn
 from utils.nn_utils import MLP
-from utils.stats import conditional_logpy_x, interventional_logpy_x, gaussian_nll, make_gaussian, make_standard_normal, prior_kld
-from torch.optim import AdamW
+from utils.stats import gaussian_nll, log_avg_prob, make_gaussian, prior_kld
 
 class GaussianNetwork(nn.Module):
     def __init__(self, in_dim, hidden_dims, out_dim):
@@ -16,45 +14,29 @@ class GaussianNetwork(nn.Module):
         logvar = self.logvar_net(*args)
         return mu, logvar
 
-class DiscriminativeModel(pl.LightningModule):
-    def __init__(self, data_dim, hidden_dims, lr, wd):
+class AggregatedPosterior:
+    def __init__(self, data_test, encoder_x):
         super().__init__()
-        self.save_hyperparameters()
-        self.lr = lr
-        self.wd = wd
-        self.decoder = GaussianNetwork(2 * data_dim, hidden_dims, data_dim)
+        self.posterior_dists = []
+        for x0, x1, _ in data_test:
+            mu_x, logvar_x = encoder_x(x0, x1)
+            self.posterior_dists.append(make_gaussian(mu_x, logvar_x))
 
-    def loss(self, x0, x1, y):
-        mu_reconst, logvar_reconst = self.decoder(x0, x1)
-        return gaussian_nll(y, mu_reconst, logvar_reconst)
+    def log_prob(self, z):
+        out = []
+        for posterior_dist in self.posterior_dists:
+            out.append(posterior_dist.log_prob(z))
+        out = torch.stack(out)
+        return log_avg_prob(out)
 
-    def training_step(self, batch, batch_idx):
-        loss = self.loss(*batch)
-        return loss.mean()
-
-    def validation_step(self, batch, batch_idx):
-        loss = self.loss(*batch)
-        self.log("val_loss", loss.mean(), on_step=False, on_epoch=True)
-
-    def test_step(self, batch, batch_idx):
-        loss = self.loss(*batch)
-        self.log("test_loss", loss.mean(), on_step=False, on_epoch=True)
-
-    def configure_optimizers(self):
-        return AdamW(self.parameters(), lr=self.lr, weight_decay=self.wd)
-
-class GenerativeModel(pl.LightningModule):
-    def __init__(self, data_dim, hidden_dims, latent_dim, beta, n_samples, lr, wd):
+class GenerativeModel(nn.Module):
+    def __init__(self, data_dim, hidden_dims, latent_dim, beta, n_samples):
         super().__init__()
-        self.save_hyperparameters()
         self.beta = beta
         self.n_samples = n_samples
-        self.lr = lr
-        self.wd = wd
         self.encoder_xy = GaussianNetwork(3 * data_dim, hidden_dims, latent_dim)
         self.encoder_x = GaussianNetwork(2 * data_dim, hidden_dims, latent_dim)
         self.decoder = GaussianNetwork(latent_dim + 2 * data_dim, hidden_dims, data_dim)
-        self.prior = make_standard_normal(1, latent_dim)
 
     def sample_z(self, mu, logvar):
         if self.training:
@@ -64,7 +46,7 @@ class GenerativeModel(pl.LightningModule):
         else:
             return mu
 
-    def loss(self, x0, x1, y):
+    def forward(self, x0, x1, y):
         # ELBO loss
         mu_xy, logvar_xy = self.encoder_xy(x0, x1, y)
         z = self.sample_z(mu_xy, logvar_xy)
@@ -76,36 +58,4 @@ class GenerativeModel(pl.LightningModule):
         posterior_x_dist = make_gaussian(mu_x, logvar_x)
         kld_loss = torch.distributions.kl_divergence(posterior_xy_dist, posterior_x_dist)
         prior_kld_loss = prior_kld(mu_x, logvar_x)
-        return reconst_loss, kld_loss, prior_kld_loss
-
-    def training_step(self, batch, batch_idx):
-        reconst_loss, kld_loss, prior_kld_loss = self.loss(*batch)
-        self.log("train_prior_kld_loss", prior_kld_loss.mean(), on_step=False, on_epoch=True)  # Minimize -log p
         return (reconst_loss + kld_loss + self.beta * prior_kld_loss).mean()
-
-    def inference(self, x0, x1, y):
-        assert len(x0) == 1  # Assumes batch_size=1
-        x0_rep = torch.repeat_interleave(x0, repeats=self.n_samples, dim=0)
-        x1_rep = torch.repeat_interleave(x1, repeats=self.n_samples, dim=0)
-        mu_x, logvar_x = self.encoder_x(x0, x1)
-        posterior_x_dist = make_gaussian(mu_x, logvar_x)
-        z = posterior_x_dist.sample((self.n_samples,))
-        mu_reconst, logvar_reconst = self.decoder(x0_rep, x1_rep, z[:, None] if len(z.shape) == 1 else z)
-        decoder_dist = make_gaussian(mu_reconst, logvar_reconst)
-        logp_y_xz = decoder_dist.log_prob(y.squeeze())
-        conditional_logp = conditional_logpy_x(logp_y_xz)
-        interventional_logp = interventional_logpy_x(self.prior.log_prob(z), posterior_x_dist.log_prob(z), logp_y_xz)
-        return conditional_logp, interventional_logp
-
-    def validation_step(self, batch, batch_idx):
-        conditional_logp, interventional_logp = self.inference(*batch)
-        self.log("val_loss", -conditional_logp, on_step=False, on_epoch=True) # Minimize -log p
-        self.log("val_interventional_logp", -interventional_logp, on_step=False, on_epoch=True)
-
-    def test_step(self, batch, batch_idx):
-        conditional_logp, interventional_logp = self.inference(*batch)
-        self.log("test_conditional_logp", conditional_logp, on_step=False, on_epoch=True)
-        self.log("test_interventional_logp", interventional_logp, on_step=False, on_epoch=True)
-
-    def configure_optimizers(self):
-        return AdamW(self.parameters(), lr=self.lr, weight_decay=self.wd)
