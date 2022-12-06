@@ -14,21 +14,6 @@ class GaussianNetwork(nn.Module):
         logvar = self.logvar_net(*args)
         return mu, logvar
 
-class AggregatedPosterior:
-    def __init__(self, data_test, encoder_x):
-        super().__init__()
-        self.posterior_dists = []
-        for x0, x1, _ in data_test:
-            mu_x, logvar_x = encoder_x(x0, x1)
-            self.posterior_dists.append(make_gaussian(mu_x, logvar_x))
-
-    def log_prob(self, z):
-        out = []
-        for posterior_dist in self.posterior_dists:
-            out.append(posterior_dist.log_prob(z))
-        out = torch.stack(out)
-        return log_avg_prob(out)
-
 class GenerativeModel(nn.Module):
     def __init__(self, data_dim, hidden_dims, latent_dim, beta, n_samples):
         super().__init__()
@@ -59,3 +44,18 @@ class GenerativeModel(nn.Module):
         kld_loss = torch.distributions.kl_divergence(posterior_xy_dist, posterior_x_dist)
         prior_kld_loss = prior_kld(mu_x, logvar_x)
         return (reconst_loss + kld_loss + self.beta * prior_kld_loss).mean()
+
+class AggregatedPosterior:
+    def __init__(self, data_test, encoder_x):
+        super().__init__()
+        self.posterior_dists = []
+        for x0, x1, _ in data_test:
+            mu_x, logvar_x = encoder_x(x0, x1)
+            self.posterior_dists.append(make_gaussian(mu_x, logvar_x))
+
+    def log_prob(self, z):
+        out = []
+        for posterior_dist in self.posterior_dists:
+            out.append(posterior_dist.log_prob(z))
+        out = torch.stack(out)
+        return log_avg_prob(out)
