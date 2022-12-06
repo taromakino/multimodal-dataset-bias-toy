@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from utils.nn_utils import MLP
+from utils.nn_utils import MLP, to_device
 from utils.stats import gaussian_nll, log_avg_prob, make_gaussian, prior_kld
 
 class GaussianNetwork(nn.Module):
@@ -50,6 +50,7 @@ class AggregatedPosterior:
         super().__init__()
         self.posterior_dists = []
         for x0, x1, _ in data_test:
+            x0, x1 = to_device(x0, x1)
             mu_x, logvar_x = encoder_x(x0, x1)
             self.posterior_dists.append(make_gaussian(mu_x, logvar_x))
 
