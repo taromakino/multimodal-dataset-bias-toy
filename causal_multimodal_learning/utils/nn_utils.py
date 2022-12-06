@@ -34,6 +34,9 @@ class MLP(nn.Module):
 def device():
     return torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+def to_device(*args):
+    return [arg.to(device()) for arg in args]
+
 def make_trainer(dpath, seed, n_epochs, patience):
     return pl.Trainer(
         logger=CSVLogger(dpath, name=None, version=seed),
