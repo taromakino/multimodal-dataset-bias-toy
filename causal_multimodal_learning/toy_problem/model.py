@@ -19,9 +19,9 @@ class GenerativeModel(nn.Module):
         super().__init__()
         self.beta = beta
         self.n_samples = n_samples
-        self.encoder_xy = GaussianNetwork(3 * data_dim, hidden_dims, latent_dim)
+        self.encoder_xy = GaussianNetwork(2 * data_dim + 1, hidden_dims, latent_dim)
         self.encoder_x = GaussianNetwork(2 * data_dim, hidden_dims, latent_dim)
-        self.decoder = GaussianNetwork(latent_dim + 2 * data_dim, hidden_dims, data_dim)
+        self.decoder = GaussianNetwork(latent_dim + 2 * data_dim, hidden_dims, 1)
 
     def sample_z(self, mu, logvar):
         if self.training:

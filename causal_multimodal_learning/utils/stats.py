@@ -37,3 +37,10 @@ def prior_kld(mu, logvar):
 
 def log_avg_prob(x):
     return -torch.log(torch.tensor(len(x))) + torch.logsumexp(x, 0)
+
+def row_dot(lhs, rhs):
+    assert lhs.shape == rhs.shape
+    if len(lhs.shape) == 1:
+        return lhs * rhs
+    else:
+        return (lhs * rhs).sum(axis=1)

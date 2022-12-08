@@ -2,6 +2,7 @@ import numpy as np
 import torch
 from scipy.special import expit as sigmoid
 from torch.utils.data import DataLoader, TensorDataset
+from utils.stats import row_dot
 
 def normalize(x_train, x_val, x_test):
     x_mean, x_sd = x_train.mean(axis=0), x_train.std(axis=0)
@@ -27,7 +28,6 @@ def make_raw_data(seed, n_examples, data_dim, is_spurious):
         u = rng.normal(loc=0, scale=1, size=n_examples).astype("float32")
         x0_noise = rng.normal(loc=0, scale=0.1, size=n_examples).astype("float32")
         x1_noise = rng.normal(loc=0, scale=0.1, size=n_examples).astype("float32")
-        y_noise = rng.normal(loc=0, scale=5, size=n_examples).astype("float32")
     else:
         u = rng.multivariate_normal(mean=np.zeros(data_dim), cov=np.diag(np.repeat(1 ** 2, data_dim)),
             size=n_examples).astype("float32")
@@ -35,17 +35,13 @@ def make_raw_data(seed, n_examples, data_dim, is_spurious):
             size=n_examples).astype("float32")
         x1_noise = rng.multivariate_normal(mean=np.zeros(data_dim), cov=np.diag(np.repeat(0.1 ** 2, data_dim)),
             size=n_examples).astype("float32")
-        y_noise = rng.multivariate_normal(mean=np.zeros(data_dim), cov=np.diag(np.repeat(5 ** 2, data_dim)),
-            size=n_examples).astype("float32")
+    y_noise = rng.normal(loc=0, scale=5, size=n_examples).astype("float32")
     x0 = u + x0_noise
     x1 = u**2 + x1_noise
-    y = x0 + x1 + y_noise
+    y = row_dot(x0, x1) + y_noise
     if is_spurious:
-        p = (u * y)
-        if len(p.shape) > 1:
-            p = p.sum(axis=1)
-        p = sigmoid(p)
-        v = rng.binomial(1, p)
+        prob = sigmoid(row_dot(u, np.ones_like(u)) + y)
+        v = rng.binomial(1, prob)
         idxs = np.where(v == 1)[0]
         x0, x1, y, u = x0[idxs], x1[idxs], y[idxs], u[idxs]
     return x0, x1, y, u
