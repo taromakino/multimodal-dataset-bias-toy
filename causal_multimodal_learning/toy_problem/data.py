@@ -2,7 +2,7 @@ import numpy as np
 import torch
 from scipy.special import expit as sigmoid
 from torch.utils.data import DataLoader, TensorDataset
-from utils.stats import row_dot
+from utils.stats import row_mean
 
 def normalize(x_train, x_val, x_test):
     x_mean, x_sd = x_train.mean(axis=0), x_train.std(axis=0)
@@ -38,9 +38,9 @@ def make_raw_data(seed, n_examples, data_dim, is_spurious):
     y_noise = rng.normal(loc=0, scale=5, size=n_examples).astype("float32")
     x0 = u + x0_noise
     x1 = u**2 + x1_noise
-    y = row_dot(x0, x1) + y_noise
+    y = row_mean(x0 + x1) + y_noise
     if is_spurious:
-        prob = sigmoid(row_dot(u, np.ones_like(u)) + y)
+        prob = sigmoid(row_mean(u) + y)
         v = rng.binomial(1, prob)
         idxs = np.where(v == 1)[0]
         x0, x1, y, u = x0[idxs], x1[idxs], y[idxs], u[idxs]
