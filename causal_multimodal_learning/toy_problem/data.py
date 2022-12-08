@@ -40,7 +40,7 @@ def make_raw_data(seed, n_examples, data_dim, is_spurious):
     x1 = u**2 + x1_noise
     y = row_mean(x0 + x1) + y_noise
     if is_spurious:
-        prob = sigmoid(row_mean(u) + y)
+        prob = sigmoid(row_mean(u) * y) # This doesn't work with + instead of *, why?
         v = rng.binomial(1, prob)
         idxs = np.where(v == 1)[0]
         x0, x1, y, u = x0[idxs], x1[idxs], y[idxs], u[idxs]
