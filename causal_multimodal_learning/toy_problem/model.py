@@ -1,7 +1,6 @@
 import os
 import torch
 import torch.nn as nn
-from utils.file import write
 from utils.nn_utils import MLP, to_device
 from utils.stats import gaussian_nll, log_avg_prob, make_gaussian, prior_kld
 
