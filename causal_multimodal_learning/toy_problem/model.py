@@ -1,5 +1,7 @@
+import os
 import torch
 import torch.nn as nn
+from utils.file import write
 from utils.nn_utils import MLP, to_device
 from utils.stats import gaussian_nll, log_avg_prob, make_gaussian, prior_kld
 
@@ -15,12 +17,11 @@ class GaussianNetwork(nn.Module):
         return mu, logvar
 
 class GenerativeModel(nn.Module):
-    def __init__(self, data_dim, hidden_dims, latent_dim, beta, n_samples):
+    def __init__(self, dpath, data_dim, hidden_dims, latent_dim):
         super().__init__()
-        self.beta = beta
-        self.n_samples = n_samples
+        self.dpath = os.path.join(dpath, self.__class__.__name__)
+        os.makedirs(self.dpath, exist_ok=True)
         self.encoder_xy = GaussianNetwork(2 * data_dim + 1, hidden_dims, latent_dim)
-        self.encoder_x = GaussianNetwork(2 * data_dim, hidden_dims, latent_dim)
         self.decoder = GaussianNetwork(latent_dim + 2 * data_dim, hidden_dims, 1)
 
     def sample_z(self, mu, logvar):
@@ -32,18 +33,28 @@ class GenerativeModel(nn.Module):
             return mu
 
     def forward(self, x0, x1, y):
-        # ELBO loss
         mu_xy, logvar_xy = self.encoder_xy(x0, x1, y)
         z = self.sample_z(mu_xy, logvar_xy)
         mu_reconst, logvar_reconst = self.decoder(x0, x1, z)
         reconst_loss = gaussian_nll(y, mu_reconst, logvar_reconst)
-        # KLD loss
+        kld_loss = prior_kld(mu_xy, logvar_xy)
+        return (reconst_loss + kld_loss).mean()
+
+class EncoderX(nn.Module):
+    def __init__(self, dpath, encoder_xy, data_dim, hidden_dims, latent_dim):
+        super().__init__()
+        self.dpath = os.path.join(dpath, self.__class__.__name__)
+        os.makedirs(self.dpath, exist_ok=True)
+        self.encoder_xy = encoder_xy
+        self.encoder_x = GaussianNetwork(2 * data_dim, hidden_dims, latent_dim)
+
+    def forward(self, x0, x1, y):
+        mu_xy, logvar_xy = self.encoder_xy(x0, x1, y)
         mu_x, logvar_x = self.encoder_x(x0, x1)
         posterior_xy_dist = make_gaussian(mu_xy, logvar_xy)
         posterior_x_dist = make_gaussian(mu_x, logvar_x)
-        kld_loss = torch.distributions.kl_divergence(posterior_xy_dist, posterior_x_dist)
-        prior_kld_loss = prior_kld(mu_x, logvar_x)
-        return (reconst_loss + kld_loss + self.beta * prior_kld_loss).mean()
+        loss = torch.distributions.kl_divergence(posterior_xy_dist, posterior_x_dist)
+        return loss.mean()
 
 class AggregatedPosterior:
     def __init__(self, data_test, encoder_x):
