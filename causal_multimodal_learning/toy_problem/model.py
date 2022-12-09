@@ -51,7 +51,7 @@ class EncoderX(nn.Module):
     def forward(self, x0, x1, y):
         mu_xy, logvar_xy = self.encoder_xy(x0, x1, y)
         mu_x, logvar_x = self.encoder_x(x0, x1)
-        posterior_xy_dist = make_gaussian(mu_xy, logvar_xy)
+        posterior_xy_dist = make_gaussian(mu_xy.detach(), logvar_xy.detach())
         posterior_x_dist = make_gaussian(mu_x, logvar_x)
         loss = torch.distributions.kl_divergence(posterior_xy_dist, posterior_x_dist)
         return loss.mean()
