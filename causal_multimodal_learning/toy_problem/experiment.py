@@ -10,8 +10,7 @@ from utils.stats import log_avg_prob, make_gaussian, make_standard_normal
 from toy_problem.data import make_data
 from toy_problem.model import GenerativeModel, EncoderX, AggregatedPosterior
 
-def train(data_train, data_val, model, lr, wd, patience):
-    optimizer = Adam(model.parameters(), lr=lr, weight_decay=wd)
+def train(data_train, data_val, model, optimizer, patience):
     optimal_val_epoch = 0
     optimal_val_loss = float("inf")
     optimal_weights_fpath = os.path.join(model.dpath, "optimal_weights.pt")
@@ -50,13 +49,16 @@ def main(args):
         args.batch_size, args.n_workers)
     model = GenerativeModel(dpath, args.data_dim, args.hidden_dims, args.latent_dim)
     model.to(device())
-    train(data_train, data_val, model, args.lr, args.wd, args.patience)
+    train(data_train, data_val, model, Adam(model.parameters(), lr=args.lr, weight_decay=args.wd), args.patience)
+    model.eval()
+    for param in model.parameters():
+        param.requires_grad = False
     encoder_x = EncoderX(dpath, model.encoder_xy, args.data_dim, args.hidden_dims, args.latent_dim)
     encoder_x.to(device())
-    train(data_train, data_val, encoder_x, args.lr, args.wd, args.patience)
-    encoder_x = encoder_x.encoder_x # Clean this up
-    model.eval()
+    train(data_train, data_val, encoder_x, Adam(encoder_x.encoder_x.parameters(), lr=args.lr, weight_decay=args.wd),
+        args.patience)
     encoder_x.eval()
+    encoder_x = encoder_x.encoder_x # Clean this up
     replacement_dist = AggregatedPosterior(data_test, encoder_x) if args.is_aggregated_posterior else \
         make_standard_normal(1, args.latent_dim)
     conditional_logp = interventional_logp = 0
