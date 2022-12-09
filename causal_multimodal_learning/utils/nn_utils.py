@@ -13,7 +13,8 @@ class MLP(nn.Module):
         last_in_dim = input_dim
         for hidden_dim in hidden_dims:
             module_list.append(nn.Linear(last_in_dim, hidden_dim))
-            module_list.append(nn.SiLU())
+            module_list.append(nn.ReLU())
+            module_list.append(nn.Dropout())
             last_in_dim = hidden_dim
         self.module_list = nn.Sequential(*module_list)
         if isinstance(output_dims, list):
