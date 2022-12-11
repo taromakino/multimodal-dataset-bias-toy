@@ -87,7 +87,7 @@ if __name__ == "__main__":
     parser.add_argument("--latent_dim", type=int, default=10)
     parser.add_argument("--n_samples", type=int, default=1000)
     parser.add_argument("--lr", type=float, default=1e-3)
-    parser.add_argument("--wd", type=float, default=1e-5)
+    parser.add_argument("--wd", type=float, default=0)
     parser.add_argument("--patience", type=int, default=20)
     parser.add_argument("--batch_size", type=int, default=50)
     parser.add_argument("--n_workers", type=int, default=20)
