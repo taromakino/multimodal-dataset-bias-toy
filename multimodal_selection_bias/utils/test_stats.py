@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 import unittest
-from utils.stats import log_avg_prob, interventional_logpy_x
+from utils.stats import log_avg_prob
 
 np.seterr(all="raise")
 
