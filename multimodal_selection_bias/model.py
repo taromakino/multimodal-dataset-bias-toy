@@ -10,6 +10,7 @@ class Model(pl.LightningModule):
     def __init__(self, dpath, task, data_dim, hidden_dims, latent_dim, lr, n_samples, n_posteriors, checkpoint_fpath=None,
             posterior_params_fpath=None):
         super().__init__()
+        self.save_hyperparameters()
         self.dpath = dpath
         self.task = task
         self.lr = lr
@@ -100,8 +101,8 @@ class Model(pl.LightningModule):
             self.mu_x.append(out["mu_x"])
             self.logvar_x.append(out["logvar_x"])
         elif self.task == "log_marginal_likelihood":
-            self.log("conditional_lml", out["conditional_lml"], on_step=False, on_epoch=True)
-            self.log("interventional_lml", out["interventional_lml"], on_step=False, on_epoch=True)
+            self.log("conditional_lml", out["conditional_lml"], on_step=False, on_epoch=True, reduce_fx="sum")
+            self.log("interventional_lml", out["interventional_lml"], on_step=False, on_epoch=True, reduce_fx="sum")
 
     def test_epoch_end(self, outputs):
         if self.task == "posterior_kld":

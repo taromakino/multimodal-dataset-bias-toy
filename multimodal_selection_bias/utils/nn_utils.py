@@ -26,9 +26,9 @@ def device():
 def to_device(*args):
     return [arg.to(device()) for arg in args]
 
-def make_trainer(dpath, n_epochs, patience):
+def make_trainer(dpath, seed, n_epochs, patience):
     return pl.Trainer(
-        logger=CSVLogger(dpath, name="", version=""),
+        logger=CSVLogger(dpath, name="", version=seed),
         callbacks=[
             ModelCheckpoint(monitor="val_loss"),
             EarlyStopping(monitor="val_loss", patience=patience)],

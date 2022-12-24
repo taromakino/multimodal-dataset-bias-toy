@@ -7,14 +7,15 @@ from data import make_data
 from model import Model
 
 def main(config):
+    seed = config.__dict__.pop("seed")
     save_file(config, os.path.join(config.dpath, "args.pkl"))
     os.makedirs(config.dpath, exist_ok=True)
-    pl.seed_everything(config.seed)
-    data_train, data_val, data_test = make_data(config.seed, config.n_examples, config.train_ratio, config.data_dim,
+    pl.seed_everything(seed)
+    data_train, data_val, data_test = make_data(seed, config.n_examples, config.train_ratio, config.data_dim,
         config.batch_size, config.n_workers)
     model = Model(config.dpath, config.task, config.data_dim, config.hidden_dims, config.latent_dim, config.lr,
         config.n_samples, config.n_posteriors, config.checkpoint_fpath, config.posterior_params_fpath)
-    trainer = make_trainer(config.dpath, config.n_epochs, config.patience)
+    trainer = make_trainer(config.dpath, seed, config.n_epochs, config.patience)
     if config.is_test:
         trainer.test(model, data_test)
     else:
@@ -22,11 +23,11 @@ def main(config):
 
 if __name__ == "__main__":
     parser = ArgumentParser()
+    parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--task", type=str, required=True)
     parser.add_argument("--dpath", type=str, default="results")
     parser.add_argument("--checkpoint_fpath", type=str, default=None)
     parser.add_argument("--posterior_params_fpath", type=str, default=None)
-    parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--n_examples", nargs="+", type=int, default=[1000, 1000])
     parser.add_argument("--train_ratio", type=float, default=0.8)
     parser.add_argument("--data_dim", type=int, default=1)
