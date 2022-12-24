@@ -13,7 +13,7 @@ def main(config):
     pl.seed_everything(seed)
     data_train, data_val, data_test = make_data(seed, config.n_examples, config.train_ratio, config.data_dim,
         config.batch_size, config.n_workers)
-    model = Model(config.dpath, config.task, config.data_dim, config.hidden_dims, config.latent_dim, config.lr,
+    model = Model(seed, config.dpath, config.task, config.data_dim, config.hidden_dims, config.latent_dim, config.lr,
         config.n_samples, config.n_posteriors, config.checkpoint_fpath, config.posterior_params_fpath)
     trainer = make_trainer(config.dpath, seed, config.n_epochs, config.patience)
     if config.is_test:

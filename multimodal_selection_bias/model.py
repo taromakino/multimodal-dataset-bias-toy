@@ -7,10 +7,11 @@ from utils.nn_utils import MLP
 from utils.stats import gaussian_nll, log_avg_prob, make_gaussian, prior_kld
 
 class Model(pl.LightningModule):
-    def __init__(self, dpath, task, data_dim, hidden_dims, latent_dim, lr, n_samples, n_posteriors, checkpoint_fpath=None,
-            posterior_params_fpath=None):
+    def __init__(self, seed, dpath, task, data_dim, hidden_dims, latent_dim, lr, n_samples, n_posteriors,
+            checkpoint_fpath=None, posterior_params_fpath=None):
         super().__init__()
         self.save_hyperparameters()
+        self.seed = seed
         self.dpath = dpath
         self.task = task
         self.lr = lr
@@ -108,7 +109,7 @@ class Model(pl.LightningModule):
         if self.task == "posterior_kld":
             self.mu_x = torch.stack(self.mu_x)
             self.logvar_x = torch.stack(self.logvar_x)
-            torch.save((self.mu_x, self.logvar_x), os.path.join(self.dpath, "posterior_params.pt"))
+            torch.save((self.mu_x, self.logvar_x), os.path.join(self.dpath, f"version_{self.seed}", "posterior_params.pt"))
 
     def configure_optimizers(self):
         if self.task == "posterior_kld":
