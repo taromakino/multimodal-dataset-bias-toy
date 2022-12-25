@@ -2,9 +2,19 @@ import numpy as np
 import os
 import pytorch_lightning as pl
 import torch
+import torch.nn as nn
 from torch.optim import Adam
 from utils.nn_utils import MLP
 from utils.stats import gaussian_nll, log_avg_prob, make_gaussian, prior_kld
+
+class GaussianMLP(nn.Module):
+    def __init__(self, input_dim, hidden_dims, output_dim):
+        super().__init__()
+        self.mu_net = MLP(input_dim, hidden_dims, output_dim)
+        self.logvar_net = MLP(input_dim, hidden_dims, output_dim)
+
+    def forward(self, *args):
+        return self.mu_net(*args), self.logvar_net(*args)
 
 class Model(pl.LightningModule):
     def __init__(self, seed, dpath, task, data_dim, hidden_dims, latent_dim, lr, n_samples, n_posteriors,
@@ -17,9 +27,9 @@ class Model(pl.LightningModule):
         self.lr = lr
         self.n_samples = n_samples
         self.n_posteriors = n_posteriors
-        self.encoder_x = MLP(2 * data_dim, hidden_dims, 2 * latent_dim)
-        self.encoder_xy = MLP(2 * data_dim + 1, hidden_dims, 2 * latent_dim)
-        self.decoder = MLP(latent_dim + 2 * data_dim, hidden_dims, 2)
+        self.encoder_x = GaussianMLP(2 * data_dim, hidden_dims, latent_dim)
+        self.encoder_xy = GaussianMLP(2 * data_dim + 1, hidden_dims, latent_dim)
+        self.decoder = GaussianMLP(latent_dim + 2 * data_dim, hidden_dims, 1)
         if checkpoint_fpath:
             self.load_state_dict(torch.load(checkpoint_fpath)["state_dict"])
         if task == "posterior_kld":
@@ -46,16 +56,16 @@ class Model(pl.LightningModule):
             return self.log_marginal_likelihood(x, y)
 
     def elbo(self, x, y):
-        mu_xy, logvar_xy = torch.chunk(self.encoder_xy(x, y), 2, 1)
+        mu_xy, logvar_xy = self.encoder_xy(x, y)
         z = self.sample_z(mu_xy, logvar_xy)
-        mu_reconst, logvar_reconst = torch.chunk(self.decoder(x, z), 2, 1)
+        mu_reconst, logvar_reconst = self.decoder(x, z)
         reconst_loss = gaussian_nll(y, mu_reconst, logvar_reconst)
         kld_loss = prior_kld(mu_xy, logvar_xy)
         return {"loss": (reconst_loss + kld_loss).mean()}
 
     def posterior_kld(self, x, y):
-        mu_x, logvar_x = torch.chunk(self.encoder_x(x), 2, 1)
-        mu_xy, logvar_xy = torch.chunk(self.encoder_xy(x, y), 2, 1)
+        mu_x, logvar_x = self.encoder_x(x)
+        mu_xy, logvar_xy = self.encoder_xy(x, y)
         posterior_xy = make_gaussian(mu_xy, logvar_xy)
         posterior_x = make_gaussian(mu_x, logvar_x)
         return {
@@ -65,10 +75,10 @@ class Model(pl.LightningModule):
 
     def log_marginal_likelihood(self, x, y):
         x_rep = torch.repeat_interleave(x, repeats=self.n_samples, dim=0)
-        mu_x, logvar_x = torch.chunk(self.encoder_x(x), 2, 1)
+        mu_x, logvar_x = self.encoder_x(x)
         posterior_x = make_gaussian(mu_x, logvar_x)
         z = posterior_x.sample((self.n_samples,))
-        mu_reconst, logvar_reconst = torch.chunk(self.decoder(x_rep, z), 2, 1)
+        mu_reconst, logvar_reconst = self.decoder(x_rep, z)
         decoder_dist = make_gaussian(mu_reconst, logvar_reconst)
         logp_y_xz = decoder_dist.log_prob(y.squeeze())
         assert logp_y_xz.shape == torch.Size([self.n_samples])  # (n_samples,)
