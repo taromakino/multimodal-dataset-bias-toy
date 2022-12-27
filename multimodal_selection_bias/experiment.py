@@ -13,8 +13,9 @@ def main(config):
     pl.seed_everything(seed)
     data_train, data_val, data_test = make_data(seed, config.n_examples, config.train_ratio, config.data_dim,
         config.batch_size, config.n_workers)
-    model = Model(seed, config.dpath, config.task, config.data_dim, config.hidden_dims, config.latent_dim, config.lr,
-        config.n_samples, config.n_posteriors, config.checkpoint_fpath, config.posterior_params_fpath)
+    model = Model(seed, config.dpath, config.task, config.data_dim, config.enc_hidden_dims, config.dec_hidden_dims,
+        config.latent_dim, config.lr, config.n_samples, config.n_posteriors, config.checkpoint_fpath,
+        config.posterior_params_fpath)
     trainer = make_trainer(config.dpath, seed, config.n_epochs, config.patience)
     if config.is_test:
         trainer.test(model, data_test)
@@ -31,7 +32,8 @@ if __name__ == "__main__":
     parser.add_argument("--n_examples", nargs="+", type=int, default=[1000, 1000])
     parser.add_argument("--train_ratio", type=float, default=0.8)
     parser.add_argument("--data_dim", type=int, default=1)
-    parser.add_argument("--hidden_dims", nargs="+", type=int, default=[20, 20])
+    parser.add_argument("--enc_hidden_dims", nargs="+", type=int, default=[20, 20])
+    parser.add_argument("--dec_hidden_dims", nargs="+", type=int, default=[20])
     parser.add_argument("--latent_dim", type=int, default=10)
     parser.add_argument("--n_samples", type=int, default=500)
     parser.add_argument("--n_posteriors", type=int, default=500)

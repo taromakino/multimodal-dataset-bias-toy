@@ -17,8 +17,8 @@ class GaussianMLP(nn.Module):
         return self.mu_net(*args), self.logvar_net(*args)
 
 class Model(pl.LightningModule):
-    def __init__(self, seed, dpath, task, data_dim, hidden_dims, latent_dim, lr, n_samples, n_posteriors,
-            checkpoint_fpath=None, posterior_params_fpath=None):
+    def __init__(self, seed, dpath, task, data_dim, enc_hidden_dims, dec_hidden_dims, latent_dim, lr, n_samples,
+            n_posteriors, checkpoint_fpath=None, posterior_params_fpath=None):
         super().__init__()
         self.save_hyperparameters()
         self.seed = seed
@@ -27,9 +27,9 @@ class Model(pl.LightningModule):
         self.lr = lr
         self.n_samples = n_samples
         self.n_posteriors = n_posteriors
-        self.encoder_x = GaussianMLP(2 * data_dim, hidden_dims, latent_dim, False)
-        self.encoder_xy = GaussianMLP(2 * data_dim + 1, hidden_dims, latent_dim, False)
-        self.decoder = GaussianMLP(latent_dim + 2 * data_dim, hidden_dims, 1, True)
+        self.encoder_x = GaussianMLP(2 * data_dim, enc_hidden_dims, latent_dim, False)
+        self.encoder_xy = GaussianMLP(2 * data_dim + 1, enc_hidden_dims, latent_dim, False)
+        self.decoder = GaussianMLP(latent_dim + 2 * data_dim, dec_hidden_dims, 1, True)
         if checkpoint_fpath:
             self.load_state_dict(torch.load(checkpoint_fpath)["state_dict"])
         if task == "posterior_kld":
