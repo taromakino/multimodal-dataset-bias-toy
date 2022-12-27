@@ -8,10 +8,10 @@ from utils.nn_utils import MLP
 from utils.stats import gaussian_nll, log_avg_prob, make_gaussian, prior_kld
 
 class GaussianMLP(nn.Module):
-    def __init__(self, input_dim, hidden_dims, output_dim, is_dropout):
+    def __init__(self, input_dim, hidden_dims, output_dim):
         super().__init__()
-        self.mu_net = MLP(input_dim, hidden_dims, output_dim, is_dropout)
-        self.logvar_net = MLP(input_dim, hidden_dims, output_dim, is_dropout)
+        self.mu_net = MLP(input_dim, hidden_dims, output_dim)
+        self.logvar_net = MLP(input_dim, hidden_dims, output_dim)
 
     def forward(self, *args):
         return self.mu_net(*args), self.logvar_net(*args)
@@ -27,9 +27,9 @@ class Model(pl.LightningModule):
         self.lr = lr
         self.n_samples = n_samples
         self.n_posteriors = n_posteriors
-        self.encoder_x = GaussianMLP(2 * data_dim, enc_hidden_dims, latent_dim, False)
-        self.encoder_xy = GaussianMLP(2 * data_dim + 1, enc_hidden_dims, latent_dim, False)
-        self.decoder = GaussianMLP(latent_dim + 2 * data_dim, dec_hidden_dims, 1, True)
+        self.encoder_x = GaussianMLP(2 * data_dim, enc_hidden_dims, latent_dim)
+        self.encoder_xy = GaussianMLP(2 * data_dim + 1, enc_hidden_dims, latent_dim)
+        self.decoder = GaussianMLP(latent_dim + 2 * data_dim, dec_hidden_dims, 1)
         if checkpoint_fpath:
             self.load_state_dict(torch.load(checkpoint_fpath)["state_dict"])
         if task == "posterior_kld":
