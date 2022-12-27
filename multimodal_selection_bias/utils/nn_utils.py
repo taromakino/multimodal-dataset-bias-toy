@@ -18,12 +18,12 @@ class MLP(nn.Module):
         if isinstance(output_dims, list):
             self.output_layers = nn.ModuleList()
             for output_dim in output_dims:
-                self.output_layers.append(nn.Linear(hidden_dims[-1], output_dim))
+                self.output_layers.append(nn.Linear(last_in_dim, output_dim))
         else:
-            self.output_layers = nn.Linear(hidden_dims[-1], output_dims)
+            self.output_layers = nn.Linear(last_in_dim, output_dims)
 
     def forward(self, *args):
-        out = self.module_list(torch.hstack(args))
+        out = self.module_list(torch.hstack(args)) if len(self.module_list) > 0 else torch.hstack(args)
         if isinstance(self.output_layers, nn.ModuleList):
             return [output_layer(out) for output_layer in self.output_layers]
         else:
