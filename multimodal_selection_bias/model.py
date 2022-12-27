@@ -3,6 +3,7 @@ import os
 import pytorch_lightning as pl
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from torch.optim import Adam
 from utils.nn_utils import MLP
 from utils.stats import gaussian_nll, log_avg_prob, make_gaussian, prior_kld
@@ -16,8 +17,41 @@ class GaussianMLP(nn.Module):
     def forward(self, *args):
         return self.mu_net(*args), self.logvar_net(*args)
 
+class SkipMLP(nn.Module):
+    def __init__(self, data_dim, latent_dim, hidden_dims, output_dim):
+        super().__init__()
+        self.in_layer = nn.Linear(2 * data_dim + latent_dim, hidden_dims[0])
+        self.inner_linear_h = []
+        self.outer_linear_h = []
+        self.linear_z = []
+        for i in range(len(hidden_dims) - 1):
+            self.inner_linear_h.append(nn.Linear(hidden_dims[i], hidden_dims[i + 1]))
+            self.outer_linear_h.append(nn.Linear(hidden_dims[i + 1], hidden_dims[i + 1]))
+            self.linear_z.append(nn.Linear(latent_dim, hidden_dims[i + 1]))
+        self.inner_linear_h.append(nn.Linear(hidden_dims[-1], output_dim))
+        self.outer_linear_h.append(nn.Linear(output_dim, output_dim))
+        self.linear_z.append(nn.Linear(latent_dim, output_dim))
+
+    def forward(self, x, z):
+        h = F.silu(self.in_layer(torch.hstack((x, z))))
+        for i, (inner_linear_h, outer_linear_h, linear_z) in enumerate(zip(self.inner_linear_h, self.outer_linear_h,
+                self.linear_z)):
+            h = outer_linear_h(F.silu(inner_linear_h(h))) + linear_z(z)
+            if i < len(self.inner_linear_h) - 1:
+                h = F.silu(h)
+        return h
+
+class GaussianSkipMLP(nn.Module):
+    def __init__(self, data_dim, latent_dim, hidden_dims, output_dim):
+        super().__init__()
+        self.mu_net = SkipMLP(data_dim, latent_dim, hidden_dims, output_dim)
+        self.logvar_net = SkipMLP(data_dim, latent_dim, hidden_dims, output_dim)
+
+    def forward(self, x, z):
+        return self.mu_net(x, z), self.logvar_net(x, z)
+
 class Model(pl.LightningModule):
-    def __init__(self, seed, dpath, task, data_dim, enc_hidden_dims, dec_hidden_dims, latent_dim, lr, n_samples,
+    def __init__(self, seed, dpath, task, data_dim, hidden_dims, latent_dim, lr, n_samples,
             n_posteriors, checkpoint_fpath=None, posterior_params_fpath=None):
         super().__init__()
         self.save_hyperparameters()
@@ -27,9 +61,9 @@ class Model(pl.LightningModule):
         self.lr = lr
         self.n_samples = n_samples
         self.n_posteriors = n_posteriors
-        self.encoder_x = GaussianMLP(2 * data_dim, enc_hidden_dims, latent_dim)
-        self.encoder_xy = GaussianMLP(2 * data_dim + 1, enc_hidden_dims, latent_dim)
-        self.decoder = GaussianMLP(latent_dim + 2 * data_dim, dec_hidden_dims, 1)
+        self.encoder_x = GaussianMLP(2 * data_dim, hidden_dims, latent_dim)
+        self.encoder_xy = GaussianMLP(2 * data_dim + 1, hidden_dims, latent_dim)
+        self.decoder = GaussianSkipMLP(data_dim, latent_dim, hidden_dims, 1)
         if checkpoint_fpath:
             self.load_state_dict(torch.load(checkpoint_fpath)["state_dict"])
         if task == "posterior_kld":
