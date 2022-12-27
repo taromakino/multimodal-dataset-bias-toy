@@ -18,7 +18,7 @@ class MLP(nn.Module):
         self.module_list = nn.Sequential(*module_list)
 
     def forward(self, *args):
-        return self.module_list(torch.hstack((args)) if len(args) > 1 else args[0])
+        return self.module_list(torch.hstack(args))
 
 def device():
     return torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -30,7 +30,7 @@ def make_trainer(dpath, seed, n_epochs, patience):
     return pl.Trainer(
         logger=CSVLogger(dpath, name="", version=seed),
         callbacks=[
-            ModelCheckpoint(monitor="val_loss"),
+            ModelCheckpoint(monitor="val_loss", filename="best"),
             EarlyStopping(monitor="val_loss", patience=patience)],
         max_epochs=n_epochs,
         accelerator="gpu" if torch.cuda.is_available() else "cpu")

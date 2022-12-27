@@ -61,7 +61,10 @@ class Model(pl.LightningModule):
         mu_reconst, logvar_reconst = self.decoder(x, z)
         reconst_loss = gaussian_nll(y, mu_reconst, logvar_reconst)
         kld_loss = prior_kld(mu_xy, logvar_xy)
-        return {"loss": (reconst_loss + kld_loss).mean()}
+        return {
+            "loss": (reconst_loss + kld_loss).mean(),
+            "kld": kld_loss.mean()
+        }
 
     def posterior_kld(self, x, y):
         mu_x, logvar_x = self.encoder_x(x)
@@ -105,6 +108,8 @@ class Model(pl.LightningModule):
     def validation_step(self, batch, batch_idx):
         out = self.forward(*batch)
         self.log("val_loss", out["loss"], on_step=False, on_epoch=True)
+        if self.task == "vae":
+            self.log("val_kld", out["kld"], on_step=False, on_epoch=True)
 
     def test_step(self, batch, batch_idx):
         out = self.forward(*batch)
