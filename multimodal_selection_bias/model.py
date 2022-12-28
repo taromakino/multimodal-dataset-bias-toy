@@ -21,9 +21,9 @@ class SkipMLP(nn.Module):
     def __init__(self, data_dim, latent_dim, hidden_dims, output_dim):
         super().__init__()
         self.in_layer = nn.Linear(2 * data_dim + latent_dim, hidden_dims[0])
-        self.inner_linear_h = []
-        self.outer_linear_h = []
-        self.linear_z = []
+        self.inner_linear_h = nn.ModuleList()
+        self.outer_linear_h = nn.ModuleList()
+        self.linear_z = nn.ModuleList()
         for i in range(len(hidden_dims) - 1):
             self.inner_linear_h.append(nn.Linear(hidden_dims[i], hidden_dims[i + 1]))
             self.outer_linear_h.append(nn.Linear(hidden_dims[i + 1], hidden_dims[i + 1]))
