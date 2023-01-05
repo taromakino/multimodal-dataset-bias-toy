@@ -116,7 +116,7 @@ class Model(pl.LightningModule):
         mu_x, logvar_x = self.encoder_x(x)
         posterior_x = make_gaussian(mu_x, logvar_x)
         z = posterior_x.sample((self.n_samples,))
-        mu_reconst, logvar_reconst = self.decoder(x_rep, z)
+        mu_reconst, logvar_reconst = self.decoder(x_rep, z[:, None] if len(z.shape) == 1 else z)
         decoder_dist = make_gaussian(mu_reconst, logvar_reconst)
         logp_y_xz = decoder_dist.log_prob(y.squeeze())
         assert logp_y_xz.shape == torch.Size([self.n_samples])  # (n_samples,)
