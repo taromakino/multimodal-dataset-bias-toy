@@ -148,12 +148,14 @@ class Model(pl.LightningModule):
 
     def test_step(self, batch, batch_idx):
         out = self.forward(*batch)
+        if "loss" in out:
+            self.log("test_loss", out["loss"], on_step=False, on_epoch=True)
         if self.task == "posterior_kld":
             self.mu_x.append(out["mu_x"])
             self.logvar_x.append(out["logvar_x"])
         elif self.task == "log_marginal_likelihood":
-            self.log("conditional_lml", out["conditional_lml"], on_step=False, on_epoch=True, reduce_fx="sum")
-            self.log("interventional_lml", out["interventional_lml"], on_step=False, on_epoch=True, reduce_fx="sum")
+            self.log("conditional_lml", out["conditional_lml"], on_step=False, on_epoch=True)
+            self.log("interventional_lml", out["interventional_lml"], on_step=False, on_epoch=True)
 
     def test_epoch_end(self, outputs):
         if self.task == "posterior_kld":
