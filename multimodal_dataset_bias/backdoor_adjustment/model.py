@@ -17,8 +17,8 @@ class GaussianMLP(nn.Module):
         return self.mu_net(*args), self.logvar_net(*args)
 
 class Model(pl.LightningModule):
-    def __init__(self, seed, dpath, task, data_dim, hidden_dims_xy, hidden_dims_x, latent_dim, lr, n_samples,
-            n_posteriors, checkpoint_fpath=None, posterior_params_fpath=None):
+    def __init__(self, seed, dpath, task, data_dim, hidden_dims, latent_dim, lr, n_samples, n_posteriors,
+            checkpoint_fpath=None, posterior_params_fpath=None):
         super().__init__()
         self.save_hyperparameters()
         self.seed = seed
@@ -27,8 +27,8 @@ class Model(pl.LightningModule):
         self.lr = lr
         self.n_samples = n_samples
         self.n_posteriors = n_posteriors
-        self.encoder_xy = GaussianMLP(2 * data_dim + 1, hidden_dims_xy, latent_dim)
-        self.encoder_x = GaussianMLP(2 * data_dim, hidden_dims_x, latent_dim)
+        self.encoder_xy = GaussianMLP(2 * data_dim + 1, hidden_dims, latent_dim)
+        self.encoder_x = GaussianMLP(2 * data_dim, hidden_dims, latent_dim)
         self.decoder = GaussianMLP(2 * data_dim + latent_dim, [], 1)
         if checkpoint_fpath:
             self.load_state_dict(torch.load(checkpoint_fpath)["state_dict"])
