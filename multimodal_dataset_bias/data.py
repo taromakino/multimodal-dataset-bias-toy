@@ -48,13 +48,11 @@ def make_raw_data(seed, n_examples, data_dim, is_spurious, s_shift):
         x0, x1, y, u = x0[idxs], x1[idxs], y[idxs], u[idxs]
     return np.c_[x0, x1], y
 
-def make_data(seed, n_examples, train_ratio, s_shift, data_dim, batch_size, n_workers):
-    n_trainval, n_test = n_examples
-    x_trainval, y_trainval = make_raw_data(seed, n_trainval, data_dim, True, s_shift)
-    n_train = int(len(x_trainval) * train_ratio)
-    x_train, y_train = x_trainval[:n_train], y_trainval[:n_train]
-    x_val, y_val = x_trainval[n_train:], y_trainval[n_train:]
-    x_test, y_test = make_raw_data(2 ** 32 - 1, n_test, data_dim, False, s_shift)
+def make_data(seed, n_examples, s_shift, data_dim, batch_size, n_workers):
+    n_train, n_val, n_test = n_examples
+    x_train, y_train = make_raw_data(seed, n_train, data_dim, True, s_shift)
+    x_val, y_val = make_raw_data(2 ** 32 - 1, n_val, data_dim, True, s_shift)
+    x_test, y_test = make_raw_data(2 ** 32 - 2, n_test, data_dim, False, s_shift)
 
     x_train, x_val, x_test = to_torch(*normalize(x_train, x_val, x_test))
     y_train, y_val, y_test = to_torch(y_train, y_val, y_test)

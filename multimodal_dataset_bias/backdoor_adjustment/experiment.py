@@ -11,8 +11,8 @@ def main(config):
     save_file(config, os.path.join(config.dpath, "args.pkl"))
     os.makedirs(config.dpath, exist_ok=True)
     pl.seed_everything(seed)
-    data_train, data_val, data_test = make_data(seed, config.n_examples, config.train_ratio, config.s_shift,
-        config.data_dim, config.batch_size, config.n_workers)
+    data_train, data_val, data_test = make_data(seed, config.n_examples, config.s_shift, config.data_dim,
+        config.batch_size, config.n_workers)
     model = Model(seed, config.dpath, config.task, config.data_dim, config.hidden_dims, config.latent_dim, config.lr,
         config.n_samples, config.n_posteriors, config.checkpoint_fpath, config.posterior_params_fpath)
     trainer = make_trainer(config.dpath, seed, config.n_epochs, config.patience)
@@ -28,8 +28,7 @@ if __name__ == "__main__":
     parser.add_argument("--dpath", type=str, required=True)
     parser.add_argument("--checkpoint_fpath", type=str, default=None)
     parser.add_argument("--posterior_params_fpath", type=str, default=None)
-    parser.add_argument("--n_examples", nargs="+", type=int, default=[1000, 1000])
-    parser.add_argument("--train_ratio", type=float, default=0.8)
+    parser.add_argument("--n_examples", nargs="+", type=int, default=[1000, 1000, 1000])
     parser.add_argument("--s_shift", type=float, default=0)
     parser.add_argument("--data_dim", type=int, default=1)
     parser.add_argument("--hidden_dims", nargs="+", type=int, default=[64, 64])
