@@ -5,7 +5,7 @@ import torch
 import torch.nn as nn
 from torch.optim import Adam
 from utils.nn_utils import MLP
-from utils.stats import gaussian_nll, log_avg_prob, make_gaussian, prior_kld
+from utils.stats import gaussian_nll, log_avg_prob, make_gaussian, make_standard_normal, prior_kld
 
 class GaussianMLP(nn.Module):
     def __init__(self, input_dim, hidden_dims, output_dim):
@@ -17,8 +17,8 @@ class GaussianMLP(nn.Module):
         return self.mu_net(*args), self.logvar_net(*args)
 
 class Model(pl.LightningModule):
-    def __init__(self, seed, dpath, task, data_dim, hidden_dims, latent_dim, lr, n_samples, n_posteriors,
-            checkpoint_fpath=None, posterior_params_fpath=None):
+    def __init__(self, seed, dpath, task, data_dim, hidden_dims, latent_dim, lr, n_samples,
+            n_posteriors, is_prior_adj, checkpoint_fpath=None, posterior_params_fpath=None):
         super().__init__()
         self.save_hyperparameters()
         self.seed = seed
@@ -26,7 +26,9 @@ class Model(pl.LightningModule):
         self.task = task
         self.lr = lr
         self.n_samples = n_samples
+        self.is_prior_adj = is_prior_adj
         self.n_posteriors = n_posteriors
+        self.prior = make_standard_normal(latent_dim)
         self.encoder_xy = GaussianMLP(2 * data_dim + 1, hidden_dims, latent_dim)
         self.encoder_x = GaussianMLP(2 * data_dim, hidden_dims, latent_dim)
         self.decoder = GaussianMLP(2 * data_dim + latent_dim, [], 1)
@@ -86,17 +88,20 @@ class Model(pl.LightningModule):
         logp_y_xz = decoder_dist.log_prob(y.squeeze())
         assert logp_y_xz.shape == torch.Size([self.n_samples])  # (n_samples,)
 
-        n_test = len(self.mu_x)
-        idxs = np.random.choice(n_test, self.n_posteriors, replace=False)
-        mu_x = self.mu_x[idxs]
-        logvar_x = self.logvar_x[idxs]
-        agg_posterior = make_gaussian(mu_x, logvar_x)
-        logp_agg_posterior = log_avg_prob(agg_posterior.log_prob(z[:, None, :]).T)
-        assert logp_agg_posterior.shape == torch.Size([self.n_samples])  # (n_samples,)
+        if self.is_prior_adj:
+            logp_adjust = self.prior.log_prob(z)
+        else:
+            n_test = len(self.mu_x)
+            idxs = np.random.choice(n_test, self.n_posteriors, replace=False)
+            mu_x = self.mu_x[idxs]
+            logvar_x = self.logvar_x[idxs]
+            agg_posterior = make_gaussian(mu_x, logvar_x)
+            logp_adjust = log_avg_prob(agg_posterior.log_prob(z[:, None, :]).T)
+            assert logp_adjust.shape == torch.Size([self.n_samples])  # (n_samples,)
 
         return {
             "conditional_lml": log_avg_prob(logp_y_xz),
-            "interventional_lml": log_avg_prob(logp_agg_posterior - posterior_x.log_prob(z) + logp_y_xz)}
+            "interventional_lml": log_avg_prob(logp_adjust - posterior_x.log_prob(z) + logp_y_xz)}
 
     def training_step(self, batch, batch_idx):
         out = self.forward(*batch)

@@ -18,9 +18,9 @@ def make_gaussian(mu, logvar):
         dist = MultivariateNormal(loc=mu, covariance_matrix=cov_mat)
     return dist
 
-def make_standard_normal(batch_size, latent_dim):
-    mu = torch.zeros(batch_size, latent_dim, device=device())
-    logvar = torch.zeros(batch_size, latent_dim, device=device())
+def make_standard_normal(latent_dim):
+    mu = torch.zeros(1, latent_dim, device=device())
+    logvar = torch.zeros(1, latent_dim, device=device())
     return make_gaussian(mu, logvar)
 
 def gaussian_nll(x, mu, logvar):
