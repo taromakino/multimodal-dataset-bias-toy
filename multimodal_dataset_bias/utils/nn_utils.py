@@ -29,5 +29,4 @@ def make_trainer(dpath, seed, n_steps):
     return pl.Trainer(
         logger=CSVLogger(dpath, name="", version=seed),
         callbacks=[ModelCheckpoint(save_last=True)],
-        max_steps=n_steps,
-        accelerator="gpu" if torch.cuda.is_available() else "cpu")
+        max_steps=n_steps)
