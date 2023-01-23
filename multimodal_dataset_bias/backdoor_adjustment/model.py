@@ -100,6 +100,9 @@ class Model(pl.LightningModule):
 
     def training_step(self, batch, batch_idx):
         out = self.forward(*batch)
+        self.log("train_loss", out["loss"], on_step=False, on_epoch=True)
+        if self.task == "vae":
+            self.log("train_kld", out["kld"], on_step=False, on_epoch=True)
         return out["loss"]
 
     def validation_step(self, batch, batch_idx):
