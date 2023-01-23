@@ -18,7 +18,7 @@ def p_value(dpath, n_seeds):
     return ttest_ind(conditional_lml_values, interventional_lml_values, alternative="less")[1]
 
 def main(args):
-    fig, axes = plt.subplots(1, 2, figsize=(9, 3))
+    fig, axes = plt.subplots(1, 2, figsize=(7.5, 2.5))
     # s_shift
     p_values = []
     for s_shift in args.s_shift_range:

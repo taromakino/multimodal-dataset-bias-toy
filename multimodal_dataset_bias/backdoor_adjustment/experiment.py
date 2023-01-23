@@ -14,7 +14,7 @@ def main(config):
     data_train, data_val, data_test = make_data(seed, config.n_examples, config.data_dim, config.is_spurious,
         config.s_shift, config.batch_size, config.n_workers)
     model = Model(seed, config.dpath, config.task, config.data_dim, config.hidden_dims, config.latent_dim, config.lr,
-        config.n_samples, config.n_posteriors, config.is_prior_adj, config.checkpoint_fpath, config.posterior_params_fpath)
+        config.n_samples, config.n_posteriors, config.checkpoint_fpath, config.posterior_params_fpath)
     trainer = make_trainer(config.dpath, seed, config.n_epochs, config.patience)
     if config.is_test:
         trainer.test(model, data_test)
@@ -41,6 +41,5 @@ if __name__ == "__main__":
     parser.add_argument("--batch_size", type=int, default=64)
     parser.add_argument("--n_workers", type=int, default=20)
     parser.add_argument("--is_spurious", action="store_true")
-    parser.add_argument("--is_prior_adj", action="store_true")
     parser.add_argument("--is_test", action="store_true")
     main(parser.parse_args())
