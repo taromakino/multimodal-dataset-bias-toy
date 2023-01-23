@@ -23,11 +23,8 @@ class UnimodalEnsemble(pl.LightningModule):
 
     def training_step(self, batch, batch_idx):
         loss = self.forward(*batch)
+        self.log("train_loss", loss, on_step=False, on_epoch=True)
         return loss
-
-    def validation_step(self, batch, batch_idx):
-        loss = self.forward(*batch)
-        self.log("val_loss", loss, on_step=False, on_epoch=True)
 
     def test_step(self, batch, batch_idx):
         loss = self.forward(*batch)
@@ -51,11 +48,8 @@ class Multimodal(pl.LightningModule):
 
     def training_step(self, batch, batch_idx):
         loss = self.forward(*batch)
+        self.log("train_loss", loss, on_step=False, on_epoch=True)
         return loss
-
-    def validation_step(self, batch, batch_idx):
-        loss = self.forward(*batch)
-        self.log("val_loss", loss, on_step=False, on_epoch=True)
 
     def test_step(self, batch, batch_idx):
         loss = self.forward(*batch)

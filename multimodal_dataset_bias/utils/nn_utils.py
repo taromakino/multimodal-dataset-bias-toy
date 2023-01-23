@@ -2,7 +2,6 @@ import pytorch_lightning as pl
 import torch
 import torch.nn as nn
 from pytorch_lightning.callbacks import ModelCheckpoint
-from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from pytorch_lightning.loggers import CSVLogger
 
 class MLP(nn.Module):
@@ -26,11 +25,9 @@ def device():
 def to_device(*args):
     return [arg.to(device()) for arg in args]
 
-def make_trainer(dpath, seed, n_epochs, patience):
+def make_trainer(dpath, seed, n_steps):
     return pl.Trainer(
         logger=CSVLogger(dpath, name="", version=seed),
-        callbacks=[
-            ModelCheckpoint(monitor="val_loss", filename="best"),
-            EarlyStopping(monitor="val_loss", patience=patience)],
-        max_epochs=n_epochs,
+        callbacks=[ModelCheckpoint(save_last=True)],
+        max_steps=n_steps,
         accelerator="gpu" if torch.cuda.is_available() else "cpu")
