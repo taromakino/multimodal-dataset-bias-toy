@@ -6,12 +6,11 @@ from utils.stats import row_mean
 def sigmoid(x, shift):
     return 1 / (1 + np.exp(-(x - shift)))
 
-def normalize(x_train, x_val, x_test):
+def normalize(x_train, x_test):
     x_mean, x_sd = x_train.mean(axis=0), x_train.std(axis=0)
     x_train = (x_train - x_mean) / x_sd
-    x_val = (x_val - x_mean) / x_sd
     x_test = (x_test - x_mean) / x_sd
-    return x_train, x_val, x_test
+    return x_train, x_test
 
 def to_torch(*arrs):
     out = [torch.tensor(arr)[:, None] if len(arr.shape)== 1 else torch.tensor(arr) for arr in arrs]
@@ -49,15 +48,13 @@ def make_raw_data(seed, n_examples, data_dim, is_spurious, s_shift):
     return np.c_[x0, x1], y
 
 def make_data(seed, n_examples, data_dim, is_spurious, s_shift, batch_size, n_workers):
-    n_train, n_val, n_test = n_examples
+    n_train, n_test = n_examples
     x_train, y_train = make_raw_data(seed, n_train, data_dim, is_spurious, s_shift)
-    x_val, y_val = make_raw_data(2 ** 32 - 1, n_val, data_dim, is_spurious, s_shift)
-    x_test, y_test = make_raw_data(2 ** 32 - 2, n_test, data_dim, False, s_shift)
+    x_test, y_test = make_raw_data(2 ** 32 - 1, n_test, data_dim, False, s_shift)
 
-    x_train, x_val, x_test = to_torch(*normalize(x_train, x_val, x_test))
-    y_train, y_val, y_test = to_torch(y_train, y_val, y_test)
+    x_train, x_test = to_torch(*normalize(x_train, x_test))
+    y_train, y_test = to_torch(y_train, y_test)
 
     data_train = make_dataloader((x_train, y_train), batch_size, n_workers, True)
-    data_val = make_dataloader((x_val, y_val), batch_size, n_workers, False)
     data_test = make_dataloader((x_test, y_test), 1, n_workers, False)
-    return data_train, data_val, data_test
+    return data_train, data_test
