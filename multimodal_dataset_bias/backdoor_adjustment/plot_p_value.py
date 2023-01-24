@@ -45,8 +45,8 @@ def main(args):
 
 if __name__ == "__main__":
     parser = ArgumentParser()
-    parser.add_argument("--dpath", type=str, default="results")
-    parser.add_argument("--n_seeds", type=int, default=5)
+    parser.add_argument("--dpath", type=str, default="results/backdoor_adjustment")
+    parser.add_argument("--n_seeds", type=int, default=15)
     parser.add_argument("--s_shift_range", nargs="+", type=int, default=[-4, -2, 0, 2, 4])
     parser.add_argument("--n_train_range", nargs="+", type=int, default=[1600, 800, 400, 200, 100])
     main(parser.parse_args())

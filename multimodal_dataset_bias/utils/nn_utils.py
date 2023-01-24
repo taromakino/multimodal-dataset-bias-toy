@@ -28,5 +28,5 @@ def to_device(*args):
 def make_trainer(dpath, seed, n_steps):
     return pl.Trainer(
         logger=CSVLogger(dpath, name="", version=seed),
-        callbacks=[ModelCheckpoint(save_last=True)],
+        callbacks=[ModelCheckpoint(monitor="val_loss", filename="best")],
         max_steps=n_steps)

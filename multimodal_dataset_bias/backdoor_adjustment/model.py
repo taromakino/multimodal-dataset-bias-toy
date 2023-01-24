@@ -18,7 +18,7 @@ class GaussianMLP(nn.Module):
 
 class Model(pl.LightningModule):
     def __init__(self, seed, dpath, task, data_dim, hidden_dims, latent_dim, lr, n_samples, n_posteriors,
-            checkpoint_fpath=None, posterior_params_fpath=None):
+            checkpoint_fpath, posterior_params_fpath):
         super().__init__()
         self.save_hyperparameters()
         self.seed = seed
@@ -35,9 +35,9 @@ class Model(pl.LightningModule):
         if task == "posterior_kld":
             self.freeze()
             self.encoder_x.requires_grad_(True)
-            self.mu_x, self.logvar_x = [], []
+            self.test_mu_x, self.test_logvar_x = [], []
         elif task == "log_marginal_likelihood":
-            self.mu_x, self.logvar_x = torch.load(posterior_params_fpath)
+            self.test_mu_x, self.test_logvar_x = torch.load(posterior_params_fpath)
 
     def sample_z(self, mu, logvar):
         if self.training:
@@ -86,11 +86,15 @@ class Model(pl.LightningModule):
         logp_y_xz = decoder_dist.log_prob(y.squeeze())
         assert logp_y_xz.shape == torch.Size([self.n_samples])  # (n_samples,)
 
-        n_test = len(self.mu_x)
-        idxs = np.random.choice(n_test, self.n_posteriors, replace=False)
-        mu_x = self.mu_x[idxs]
-        logvar_x = self.logvar_x[idxs]
-        agg_posterior = make_gaussian(mu_x, logvar_x)
+        n_test = len(self.test_mu_x)
+        if self.n_posteriors < n_test:
+            idxs = np.random.choice(n_test, self.n_posteriors, replace=False)
+            test_mu_x = self.test_mu_x[idxs]
+            test_logvar_x = self.test_logvar_x[idxs]
+        else:
+            test_mu_x = self.test_mu_x
+            test_logvar_x = self.test_logvar_x
+        agg_posterior = make_gaussian(test_mu_x, test_logvar_x)
         logp_adjust = log_avg_prob(agg_posterior.log_prob(z[:, None, :]).T)
         assert logp_adjust.shape == torch.Size([self.n_samples])  # (n_samples,)
 
@@ -105,22 +109,28 @@ class Model(pl.LightningModule):
             self.log("train_kld", out["kld"], on_step=False, on_epoch=True)
         return out["loss"]
 
+    def validation_step(self, batch, batch_idx):
+        out = self.forward(*batch)
+        self.log("val_loss", out["loss"], on_step=False, on_epoch=True)
+        if self.task == "vae":
+            self.log("val_kld", out["kld"], on_step=False, on_epoch=True)
+
     def test_step(self, batch, batch_idx):
         out = self.forward(*batch)
         if "loss" in out:
             self.log("test_loss", out["loss"], on_step=False, on_epoch=True)
         if self.task == "posterior_kld":
-            self.mu_x.append(out["mu_x"])
-            self.logvar_x.append(out["logvar_x"])
+            self.test_mu_x.append(out["mu_x"])
+            self.test_logvar_x.append(out["logvar_x"])
         elif self.task == "log_marginal_likelihood":
             self.log("conditional_lml", out["conditional_lml"], on_step=False, on_epoch=True)
             self.log("interventional_lml", out["interventional_lml"], on_step=False, on_epoch=True)
 
     def test_epoch_end(self, outputs):
         if self.task == "posterior_kld":
-            self.mu_x = torch.vstack(self.mu_x)
-            self.logvar_x = torch.vstack(self.logvar_x)
-            torch.save((self.mu_x, self.logvar_x), os.path.join(self.dpath, f"version_{self.seed}", "posterior_params.pt"))
+            self.test_mu_x = torch.vstack(self.test_mu_x)
+            self.test_logvar_x = torch.vstack(self.test_logvar_x)
+            torch.save((self.test_mu_x, self.test_logvar_x), os.path.join(self.dpath, f"version_{self.seed}", "posterior_params.pt"))
 
     def configure_optimizers(self):
         if self.task == "posterior_kld":
