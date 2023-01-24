@@ -54,7 +54,7 @@ def make_data(seed, n_examples, train_ratio, data_dim, s_shift, batch_size, n_wo
     n_train = int(len(x_trainval) * train_ratio)
     x_train, y_train = x_trainval[:n_train], y_trainval[:n_train]
     x_val, y_val = x_trainval[n_train:], y_trainval[n_train:]
-    x_test, y_test = make_raw_data(2 ** 32 - 1, n_test, data_dim, s_shift)
+    x_test, y_test = make_raw_data(2 ** 32 - 1, n_test, data_dim, None)
 
     x_train, x_val, x_test = to_torch(*normalize(x_train, x_val, x_test))
     y_train, y_val, y_test = to_torch(y_train, y_val, y_test)
