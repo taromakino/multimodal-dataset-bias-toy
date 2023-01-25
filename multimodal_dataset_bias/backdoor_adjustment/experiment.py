@@ -40,6 +40,5 @@ if __name__ == "__main__":
     parser.add_argument("--patience", type=int, default=20)
     parser.add_argument("--batch_size", type=int, default=64)
     parser.add_argument("--n_workers", type=int, default=20)
-    parser.add_argument("--is_spurious", action="store_true")
     parser.add_argument("--is_test", action="store_true")
     main(parser.parse_args())

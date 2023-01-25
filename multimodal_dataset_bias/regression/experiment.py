@@ -11,12 +11,12 @@ def main(config):
     save_file(config, os.path.join(config.dpath, "args.pkl"))
     os.makedirs(config.dpath, exist_ok=True)
     pl.seed_everything(seed)
-    data_train, data_test = make_data(seed, config.n_examples, config.train_ratio, config.data_dim, config.s_shift,
+    data_train, data_val, data_test = make_data(seed, config.n_examples, config.train_ratio, config.data_dim, config.s_shift,
         config.batch_size, config.n_workers)
     model_class = Multimodal if config.is_multimodal else UnimodalEnsemble
     model = model_class(seed, config.dpath, config.data_dim, config.hidden_dims, config.lr)
     trainer = make_trainer(config.dpath, seed, config.patience)
-    trainer.fit(model, data_train)
+    trainer.fit(model, data_train, data_val)
     trainer.test(model, data_test)
 
 if __name__ == "__main__":
@@ -33,5 +33,4 @@ if __name__ == "__main__":
     parser.add_argument("--batch_size", type=int, default=64)
     parser.add_argument("--n_workers", type=int, default=20)
     parser.add_argument("--is_multimodal", action="store_true")
-    parser.add_argument("--is_spurious", action="store_true")
     main(parser.parse_args())
