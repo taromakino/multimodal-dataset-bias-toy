@@ -2,6 +2,7 @@ import pytorch_lightning as pl
 import torch
 import torch.nn as nn
 from pytorch_lightning.callbacks import ModelCheckpoint
+from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from pytorch_lightning.loggers import CSVLogger
 
 class MLP(nn.Module):
@@ -25,8 +26,9 @@ def device():
 def to_device(*args):
     return [arg.to(device()) for arg in args]
 
-def make_trainer(dpath, seed, n_steps):
+def make_trainer(dpath, seed, patience):
     return pl.Trainer(
         logger=CSVLogger(dpath, name="", version=seed),
-        callbacks=[ModelCheckpoint(monitor="val_loss", filename="best")],
-        max_steps=n_steps)
+        callbacks=[
+            ModelCheckpoint(monitor="val_loss", filename="best"),
+            EarlyStopping(monitor="val_loss", patience=patience)])

@@ -14,10 +14,9 @@ def main(args):
     # s_shift
     means, sds = [], []
     for s_shift in args.s_shift_range:
-        dpath = os.path.join(args.dpath, f"s_shift={s_shift}")
         values = []
         for seed in range(args.n_seeds):
-            fpath = os.path.join(dpath, "vae", f"version_{seed}", "metrics.csv")
+            fpath = os.path.join(args.dpath, f"s_shift={s_shift}", "vae", f"version_{seed}", "metrics.csv")
             values.append(kld(fpath))
         means.append(np.mean(values))
         sds.append(np.std(values))
@@ -29,10 +28,9 @@ def main(args):
     # n_train
     means, sds = [], []
     for n_train in args.n_train_range:
-        dpath = os.path.join(args.dpath, f"n_train={n_train}")
         values = []
         for seed in range(args.n_seeds):
-            fpath = os.path.join(dpath, "vae", f"version_{seed}", "metrics.csv")
+            fpath = os.path.join(args.dpath, f"n_train={n_train}", "vae", f"version_{seed}", "metrics.csv")
             values.append(kld(fpath))
         means.append(np.mean(values))
         sds.append(np.std(values))

@@ -15,7 +15,7 @@ def main(config):
         config.batch_size, config.n_workers)
     model = Model(seed, config.dpath, config.task, config.data_dim, config.hidden_dims, config.latent_dim, config.lr,
         config.n_samples, config.n_posteriors, config.checkpoint_fpath, config.posterior_params_fpath)
-    trainer = make_trainer(config.dpath, seed, config.n_steps)
+    trainer = make_trainer(config.dpath, seed, config.patience)
     if config.is_test:
         trainer.test(model, data_test)
     else:
@@ -37,7 +37,7 @@ if __name__ == "__main__":
     parser.add_argument("--n_samples", type=int, default=512)
     parser.add_argument("--n_posteriors", type=int, default=512)
     parser.add_argument("--lr", type=float, default=1e-3)
-    parser.add_argument("--n_steps", type=int, default=1000)
+    parser.add_argument("--patience", type=int, default=20)
     parser.add_argument("--batch_size", type=int, default=64)
     parser.add_argument("--n_workers", type=int, default=20)
     parser.add_argument("--is_spurious", action="store_true")
