@@ -3,8 +3,10 @@ import torch
 from torch.utils.data import DataLoader, TensorDataset
 from utils.stats import row_mean
 
+
 def sigmoid(x, shift):
     return 1 / (1 + np.exp(-(x - shift)))
+
 
 def normalize(x_train, x_val, x_test):
     x_mean, x_sd = x_train.mean(axis=0), x_train.std(axis=0)
@@ -13,6 +15,7 @@ def normalize(x_train, x_val, x_test):
     x_test = (x_test - x_mean) / x_sd
     return x_train, x_val, x_test
 
+
 def to_torch(*arrs):
     out = [torch.tensor(arr)[:, None] if len(arr.shape)== 1 else torch.tensor(arr) for arr in arrs]
     if len(out) == 1:
@@ -20,9 +23,11 @@ def to_torch(*arrs):
     else:
         return out
 
+
 def make_dataloader(data_tuple, batch_size, n_workers, is_train):
     return DataLoader(TensorDataset(*data_tuple), shuffle=is_train, batch_size=batch_size, num_workers=n_workers,
         pin_memory=True, persistent_workers=True)
+
 
 def make_raw_data(seed, n_examples, data_dim, s_shift):
     rng = np.random.RandomState(seed)
@@ -47,6 +52,7 @@ def make_raw_data(seed, n_examples, data_dim, s_shift):
         idxs = np.where(s == 1)[0]
         x0, x1, y, u = x0[idxs], x1[idxs], y[idxs], u[idxs]
     return np.c_[x0, x1], y
+
 
 def make_data(seed, n_examples, train_ratio, data_dim, s_shift, batch_size, n_workers):
     n_trainval, n_test = n_examples

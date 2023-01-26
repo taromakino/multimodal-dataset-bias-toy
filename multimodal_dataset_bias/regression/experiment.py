@@ -6,6 +6,7 @@ from utils.nn_utils import make_trainer
 from data import make_data
 from model import UnimodalEnsemble, Multimodal
 
+
 def main(config):
     seed = config.__dict__.pop("seed")
     save_file(config, os.path.join(config.dpath, "args.pkl"))
@@ -15,21 +16,24 @@ def main(config):
         config.batch_size, config.n_workers)
     model_class = Multimodal if config.is_multimodal else UnimodalEnsemble
     model = model_class(seed, config.dpath, config.data_dim, config.hidden_dims, config.lr)
-    trainer = make_trainer(config.dpath, seed, config.patience)
+    steps_per_epoch = len(data_train.dataset) // config.batch_size
+    n_early_stop_epochs = config.n_early_stop_steps // steps_per_epoch
+    trainer = make_trainer(config.dpath, seed, n_early_stop_epochs)
     trainer.fit(model, data_train, data_val)
     trainer.test(model, data_test)
+
 
 if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument("--dpath", type=str, required=True)
     parser.add_argument("--seed", type=int, default=0)
-    parser.add_argument("--n_examples", nargs="+", type=int, default=[1000, 1000])
+    parser.add_argument("--n_examples", nargs="+", type=int, default=[5000, 1000])
     parser.add_argument("--train_ratio", type=float, default=0.8)
     parser.add_argument("--data_dim", type=int, default=1)
     parser.add_argument("--s_shift", type=float, default=None)
     parser.add_argument("--hidden_dims", nargs="+", type=int, default=[128, 128])
     parser.add_argument("--lr", type=float, default=1e-3)
-    parser.add_argument("--patience", type=int, default=20)
+    parser.add_argument("--n_early_stop_steps", type=int, default=500)
     parser.add_argument("--batch_size", type=int, default=64)
     parser.add_argument("--n_workers", type=int, default=20)
     parser.add_argument("--is_multimodal", action="store_true")

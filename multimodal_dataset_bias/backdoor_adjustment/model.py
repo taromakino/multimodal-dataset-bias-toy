@@ -7,14 +7,17 @@ from torch.optim import Adam
 from utils.nn_utils import MLP
 from utils.stats import gaussian_nll, log_avg_prob, make_gaussian, make_standard_normal, prior_kld
 
+
 class GaussianMLP(nn.Module):
     def __init__(self, input_dim, hidden_dims, output_dim):
         super().__init__()
         self.mu_net = MLP(input_dim, hidden_dims, output_dim)
         self.logvar_net = MLP(input_dim, hidden_dims, output_dim)
 
+
     def forward(self, *args):
         return self.mu_net(*args), self.logvar_net(*args)
+
 
 class Model(pl.LightningModule):
     def __init__(self, seed, dpath, task, data_dim, hidden_dims, latent_dim, lr, n_samples, n_posteriors,
@@ -39,6 +42,7 @@ class Model(pl.LightningModule):
         elif task == "log_marginal_likelihood":
             self.test_mu_x, self.test_logvar_x = torch.load(posterior_params_fpath)
 
+
     def sample_z(self, mu, logvar):
         if self.training:
             sd = torch.exp(logvar / 2) # Same as sqrt(exp(logvar))
@@ -47,6 +51,7 @@ class Model(pl.LightningModule):
         else:
             return mu
 
+
     def forward(self, x, y):
         if self.task == "vae":
             return self.elbo(x, y)
@@ -54,6 +59,7 @@ class Model(pl.LightningModule):
             return self.posterior_kld(x, y)
         elif self.task == "log_marginal_likelihood":
             return self.log_marginal_likelihood(x, y)
+
 
     def elbo(self, x, y):
         mu_xy, logvar_xy = self.encoder_xy(x, y)
@@ -66,6 +72,7 @@ class Model(pl.LightningModule):
             "kld": kld_loss.mean()
         }
 
+
     def posterior_kld(self, x, y):
         mu_x, logvar_x = self.encoder_x(x)
         mu_xy, logvar_xy = self.encoder_xy(x, y)
@@ -75,6 +82,7 @@ class Model(pl.LightningModule):
             "loss": torch.distributions.kl_divergence(posterior_xy, posterior_x).mean(),
             "mu_x": mu_x.detach().cpu(),
             "logvar_x": logvar_x.detach().cpu()}
+
 
     def log_marginal_likelihood(self, x, y):
         x_rep = torch.repeat_interleave(x, repeats=self.n_samples, dim=0)
@@ -102,6 +110,7 @@ class Model(pl.LightningModule):
             "conditional_lml": log_avg_prob(logp_y_xz),
             "interventional_lml": log_avg_prob(logp_adjust - posterior_x.log_prob(z) + logp_y_xz)}
 
+
     def training_step(self, batch, batch_idx):
         out = self.forward(*batch)
         self.log("train_loss", out["loss"], on_step=False, on_epoch=True)
@@ -109,11 +118,13 @@ class Model(pl.LightningModule):
             self.log("train_kld", out["kld"], on_step=False, on_epoch=True)
         return out["loss"]
 
+
     def validation_step(self, batch, batch_idx):
         out = self.forward(*batch)
         self.log("val_loss", out["loss"], on_step=False, on_epoch=True)
         if self.task == "vae":
             self.log("val_kld", out["kld"], on_step=False, on_epoch=True)
+
 
     def test_step(self, batch, batch_idx):
         out = self.forward(*batch)
@@ -126,11 +137,13 @@ class Model(pl.LightningModule):
             self.log("conditional_lml", out["conditional_lml"], on_step=False, on_epoch=True)
             self.log("interventional_lml", out["interventional_lml"], on_step=False, on_epoch=True)
 
+
     def test_epoch_end(self, outputs):
         if self.task == "posterior_kld":
             self.test_mu_x = torch.vstack(self.test_mu_x)
             self.test_logvar_x = torch.vstack(self.test_logvar_x)
             torch.save((self.test_mu_x, self.test_logvar_x), os.path.join(self.dpath, f"version_{self.seed}", "posterior_params.pt"))
+
 
     def configure_optimizers(self):
         if self.task == "posterior_kld":

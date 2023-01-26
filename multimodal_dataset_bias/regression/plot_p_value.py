@@ -2,22 +2,20 @@ import os
 import pandas as pd
 from argparse import ArgumentParser
 from utils.plot_settings import *
-from scipy.stats import ttest_ind
+from scipy.stats import ttest_rel
 
 
-def log_marginal_likelihood(fpath):
+def loss(fpath):
     df = pd.read_csv(fpath)
-    return df.conditional_lml[0], df.interventional_lml[0]
+    return df.test_loss.iloc[-1]
 
 
 def p_value(dpath, n_seeds):
-    conditional_lml_values, interventional_lml_values = [], []
+    unimodal_values, multimodal_values = [], []
     for seed in range(n_seeds):
-        fpath = os.path.join(dpath, "log_marginal_likelihood", f"version_{seed}", "metrics.csv")
-        conditional_lml, interventional_lml = log_marginal_likelihood(fpath)
-        conditional_lml_values.append(conditional_lml)
-        interventional_lml_values.append(interventional_lml)
-    return ttest_ind(conditional_lml_values, interventional_lml_values, alternative="less")[1]
+        unimodal_values.append(loss(os.path.join(dpath, "unimodal", f"version_{seed}", "metrics.csv")))
+        multimodal_values.append(loss(os.path.join(dpath, "multimodal", f"version_{seed}", "metrics.csv")))
+    return ttest_rel(unimodal_values, multimodal_values, alternative="less")[1]
 
 
 def main(args):
@@ -47,7 +45,7 @@ def main(args):
 
 if __name__ == "__main__":
     parser = ArgumentParser()
-    parser.add_argument("--dpath", type=str, default="results/backdoor_adjustment")
+    parser.add_argument("--dpath", type=str, default="results/regression")
     parser.add_argument("--n_seeds", type=int, default=5)
     parser.add_argument("--s_shift_range", nargs="+", type=int, default=[-4, -2, 0, 2, 4])
     parser.add_argument("--n_train_range", nargs="+", type=int, default=[3200, 1600, 800, 400, 200])
