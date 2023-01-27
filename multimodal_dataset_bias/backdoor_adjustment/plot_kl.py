@@ -26,7 +26,7 @@ def main(args):
     axes[0].set_xticks(range(len(args.s_shift_range)))
     axes[0].set_xticklabels(args.s_shift_range)
     axes[0].set_xlabel(r"$c$")
-    axes[0].set_ylabel("KLD")
+    axes[0].set_ylabel("KL")
     # n_train
     means, sds = [], []
     for n_train in args.n_train_range:
@@ -40,10 +40,10 @@ def main(args):
     axes[1].set_xticks(range(len(args.n_train_range)))
     axes[1].set_xticklabels(args.n_train_range)
     axes[1].set_xlabel("Training set size")
-    axes[1].set_ylabel("KLD")
+    axes[1].set_ylabel("KL")
     fig.tight_layout()
     os.makedirs("fig", exist_ok=True)
-    plt.savefig(os.path.join("fig", "kld.pdf"), bbox_inches="tight")
+    plt.savefig(os.path.join("fig", "kl.pdf"), bbox_inches="tight")
 
 
 if __name__ == "__main__":
@@ -51,5 +51,5 @@ if __name__ == "__main__":
     parser.add_argument("--dpath", type=str, default="results/backdoor_adjustment")
     parser.add_argument("--n_seeds", type=int, default=5)
     parser.add_argument("--s_shift_range", nargs="+", type=int, default=[-4, -2, 0, 2, 4])
-    parser.add_argument("--n_train_range", nargs="+", type=int, default=[3200, 1600, 800, 400, 200])
+    parser.add_argument("--n_train_range", nargs="+", type=int, default=[1600, 800, 400, 200, 100])
     main(parser.parse_args())

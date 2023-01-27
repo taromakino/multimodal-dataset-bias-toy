@@ -5,7 +5,7 @@ import torch
 import torch.nn as nn
 from torch.optim import Adam
 from utils.nn_utils import MLP
-from utils.stats import gaussian_nll, log_avg_prob, make_gaussian, make_standard_normal, prior_kld
+from utils.stats import gaussian_nll, log_avg_prob, make_gaussian, prior_kld
 
 
 class GaussianMLP(nn.Module):
