@@ -33,7 +33,7 @@ if __name__ == "__main__":
     parser.add_argument("--checkpoint_fpath", type=str, default=None)
     parser.add_argument("--posterior_params_fpath", type=str, default=None)
     parser.add_argument("--data_dim", type=int, default=1)
-    parser.add_argument("--n_trainval", type=int, default=5000)
+    parser.add_argument("--n_trainval", type=int, default=1000)
     parser.add_argument("--n_test", type=int, default=1000)
     parser.add_argument("--train_ratio", type=float, default=0.8)
     parser.add_argument("--swap_ratio", type=float, default=None)

@@ -55,7 +55,7 @@ def make_raw_data(seed, data_dim, n_trainval, n_test, train_ratio, swap_ratio):
         trainval_idxs = sorted_idxs[:n_trainval]
         test_idxs = sorted_idxs[n_trainval:]
 
-        n_swap = int(swap_ratio * n_trainval)
+        n_swap = min(int(swap_ratio * n_trainval), n_test)
         trainval_swap_idxs = rng.choice(n_trainval, n_swap, replace=False)
         test_swap_idxs = rng.choice(n_test, n_swap, replace=False)
         trainval_swap_copy = trainval_idxs[trainval_swap_idxs].copy()
