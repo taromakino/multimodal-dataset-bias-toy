@@ -29,38 +29,52 @@ def make_dataloader(data_tuple, batch_size, n_workers, is_train):
         pin_memory=True, persistent_workers=True)
 
 
-def make_raw_data(seed, n_examples, data_dim, s_shift):
+def make_raw_data(seed, data_dim, n_trainval, n_test, train_ratio, swap_ratio):
+    n_total = n_trainval + n_test
     rng = np.random.RandomState(seed)
     if data_dim == 1:
-        u = rng.normal(loc=0, scale=1, size=n_examples).astype("float32")
-        x0_noise = rng.normal(loc=0, scale=0.01, size=n_examples).astype("float32")
-        x1_noise = rng.normal(loc=0, scale=0.01, size=n_examples).astype("float32")
+        u = rng.normal(loc=0, scale=1, size=n_total).astype("float32")
+        x0_noise = rng.normal(loc=0, scale=0.01, size=n_total).astype("float32")
+        x1_noise = rng.normal(loc=0, scale=0.01, size=n_total).astype("float32")
     else:
         u = rng.multivariate_normal(mean=np.zeros(data_dim), cov=np.diag(np.repeat(1 ** 2, data_dim)),
-            size=n_examples).astype("float32")
+            size=n_total).astype("float32")
         x0_noise = rng.multivariate_normal(mean=np.zeros(data_dim), cov=np.diag(np.repeat(0.01 ** 2, data_dim)),
-            size=n_examples).astype("float32")
+            size=n_total).astype("float32")
         x1_noise = rng.multivariate_normal(mean=np.zeros(data_dim), cov=np.diag(np.repeat(0.01 ** 2, data_dim)),
-            size=n_examples).astype("float32")
-    y_noise = rng.normal(loc=0, scale=5, size=n_examples).astype("float32")
+            size=n_total).astype("float32")
+    y_noise = rng.normal(loc=0, scale=5, size=n_total).astype("float32")
     x0 = u + x0_noise
-    x1 = u**2 + x1_noise
+    x1 = u ** 2 + x1_noise
+    x = np.c_[x0, x1]
     y = row_mean(x0 + x1) + y_noise
-    if s_shift:
-        prob = sigmoid(row_mean(u) * y, s_shift) # This doesn't work with + instead of *, why?
-        s = rng.binomial(1, prob)
-        idxs = np.where(s == 1)[0]
-        x0, x1, y, u = x0[idxs], x1[idxs], y[idxs], u[idxs]
-    return np.c_[x0, x1], y
+
+    if swap_ratio:
+        collider = row_mean(u) * y
+        sorted_idxs = np.argsort(collider)
+        trainval_idxs = sorted_idxs[:n_trainval]
+        test_idxs = sorted_idxs[n_trainval:]
+
+        n_swap = int(swap_ratio * n_trainval)
+        trainval_swap_idxs = rng.choice(n_trainval, n_swap, replace=False)
+        test_swap_idxs = rng.choice(n_test, n_swap, replace=False)
+        trainval_swap_copy = trainval_idxs[trainval_swap_idxs].copy()
+        trainval_idxs[trainval_swap_idxs] = test_idxs[test_swap_idxs].copy()
+        test_idxs[test_swap_idxs] = trainval_swap_copy
+    else:
+        trainval_idxs = rng.choice(n_trainval, n_total, replace=False)
+        test_idxs = np.setdiff1d(np.arange(n_total), trainval_idxs)
+    train_idxs = rng.choice(trainval_idxs, int(train_ratio * n_trainval), replace=False)
+    val_idxs = np.setdiff1d(trainval_idxs, train_idxs)
+    x_train, y_train = x[train_idxs], y[train_idxs]
+    x_val, y_val = x[val_idxs], y[val_idxs]
+    x_test, y_test = x[test_idxs], y[test_idxs]
+    return (x_train, y_train), (x_val, y_val), (x_test, y_test)
 
 
-def make_data(seed, n_examples, train_ratio, data_dim, s_shift, batch_size, n_workers):
-    n_trainval, n_test = n_examples
-    x_trainval, y_trainval = make_raw_data(seed, n_trainval, data_dim, s_shift)
-    n_train = int(len(x_trainval) * train_ratio)
-    x_train, y_train = x_trainval[:n_train], y_trainval[:n_train]
-    x_val, y_val = x_trainval[n_train:], y_trainval[n_train:]
-    x_test, y_test = make_raw_data(2 ** 32 - 1, n_test, data_dim, None)
+def make_data(seed, data_dim, n_trainval, n_test, train_ratio, swap_ratio, batch_size, n_workers):
+    (x_train, y_train), (x_val, y_val), (x_test, y_test) = make_raw_data(seed, data_dim, n_trainval, n_test,
+        train_ratio, swap_ratio)
 
     x_train, x_val, x_test = to_torch(*normalize(x_train, x_val, x_test))
     y_train, y_val, y_test = to_torch(y_train, y_val, y_test)
