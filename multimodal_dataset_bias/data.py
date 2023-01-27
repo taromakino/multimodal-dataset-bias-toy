@@ -49,7 +49,10 @@ def make_raw_data(seed, data_dim, n_trainval, n_test, train_ratio, swap_ratio):
     x = np.c_[x0, x1]
     y = row_mean(x0 + x1) + y_noise
 
-    if swap_ratio:
+    if swap_ratio is None:
+        trainval_idxs = rng.choice(n_total, n_trainval, replace=False)
+        test_idxs = np.setdiff1d(np.arange(n_total), trainval_idxs)
+    else:
         collider = row_mean(u) * y
         sorted_idxs = np.argsort(collider)
         trainval_idxs = sorted_idxs[:n_trainval]
@@ -61,9 +64,6 @@ def make_raw_data(seed, data_dim, n_trainval, n_test, train_ratio, swap_ratio):
         trainval_swap_copy = trainval_idxs[trainval_swap_idxs].copy()
         trainval_idxs[trainval_swap_idxs] = test_idxs[test_swap_idxs].copy()
         test_idxs[test_swap_idxs] = trainval_swap_copy
-    else:
-        trainval_idxs = rng.choice(n_trainval, n_total, replace=False)
-        test_idxs = np.setdiff1d(np.arange(n_total), trainval_idxs)
     train_idxs = rng.choice(trainval_idxs, int(train_ratio * n_trainval), replace=False)
     val_idxs = np.setdiff1d(trainval_idxs, train_idxs)
     x_train, y_train = x[train_idxs], y[train_idxs]
