@@ -51,5 +51,5 @@ if __name__ == "__main__":
     parser.add_argument("--dpath", type=str, default="results/backdoor_adjustment")
     parser.add_argument("--n_seeds", type=int, default=5)
     parser.add_argument("--swap_ratio_range", nargs="+", type=int, default=[0.0, 0.1, 0.2, 0.3, 0.4])
-    parser.add_argument("--n_trainval_range", nargs="+", type=int, default=[1600, 800, 400, 200, 100])
+    parser.add_argument("--n_trainval_range", nargs="+", type=int, default=[3200, 1600, 800, 400, 200])
     main(parser.parse_args())
