@@ -15,30 +15,30 @@ def main(args):
     fig, axes = plt.subplots(1, 2, figsize=(7.5, 2.5))
     # s_shift
     means, sds = [], []
-    for s_shift in args.s_shift_range:
+    for swap_ratio in args.swap_ratio_range:
         values = []
         for seed in range(args.n_seeds):
-            fpath = os.path.join(args.dpath, f"s_shift={s_shift}", "vae", f"version_{seed}", "metrics.csv")
+            fpath = os.path.join(args.dpath, f"swap_ratio={swap_ratio}", "vae", f"version_{seed}", "metrics.csv")
             values.append(kld(fpath))
         means.append(np.mean(values))
         sds.append(np.std(values))
     axes[0].errorbar(range(len(means)), means, sds)
-    axes[0].set_xticks(range(len(args.s_shift_range)))
-    axes[0].set_xticklabels(args.s_shift_range)
-    axes[0].set_xlabel(r"$c$")
+    axes[0].set_xticks(range(len(args.swap_ratio_range)))
+    axes[0].set_xticklabels(args.swap_ratio_range)
+    axes[0].set_xlabel("Swap ratio")
     axes[0].set_ylabel("KL")
-    # n_train
+    # n_trainval
     means, sds = [], []
-    for n_train in args.n_train_range:
+    for n_trainval in args.n_trainval_range:
         values = []
         for seed in range(args.n_seeds):
-            fpath = os.path.join(args.dpath, f"n_train={n_train}", "vae", f"version_{seed}", "metrics.csv")
+            fpath = os.path.join(args.dpath, f"n_trainval={n_trainval}", "vae", f"version_{seed}", "metrics.csv")
             values.append(kld(fpath))
         means.append(np.mean(values))
         sds.append(np.std(values))
     axes[1].errorbar(range(len(means)), means, sds)
-    axes[1].set_xticks(range(len(args.n_train_range)))
-    axes[1].set_xticklabels(args.n_train_range)
+    axes[1].set_xticks(range(len(args.n_trainval_range)))
+    axes[1].set_xticklabels(args.n_trainval_range)
     axes[1].set_xlabel("Training set size")
     axes[1].set_ylabel("KL")
     fig.tight_layout()
@@ -50,6 +50,6 @@ if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument("--dpath", type=str, default="results/backdoor_adjustment")
     parser.add_argument("--n_seeds", type=int, default=5)
-    parser.add_argument("--s_shift_range", nargs="+", type=int, default=[-4, -2, 0, 2, 4])
-    parser.add_argument("--n_train_range", nargs="+", type=int, default=[1600, 800, 400, 200, 100])
+    parser.add_argument("--swap_ratio_range", nargs="+", type=int, default=[0.0, 0.1, 0.2, 0.3, 0.4])
+    parser.add_argument("--n_trainval_range", nargs="+", type=int, default=[1600, 800, 400, 200, 100])
     main(parser.parse_args())

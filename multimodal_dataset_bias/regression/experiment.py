@@ -16,9 +16,7 @@ def main(config):
         config.train_ratio, config.swap_ratio, config.batch_size, config.n_workers)
     model_class = Multimodal if config.is_multimodal else UnimodalEnsemble
     model = model_class(seed, config.dpath, config.data_dim, config.hidden_dims, config.lr)
-    steps_per_epoch = len(data_train.dataset) // config.batch_size
-    n_early_stop_epochs = config.n_early_stop_steps // steps_per_epoch
-    trainer = make_trainer(config.dpath, seed, n_early_stop_epochs)
+    trainer = make_trainer(config.dpath, seed, config.n_epochs)
     trainer.fit(model, data_train, data_val)
     trainer.test(model, data_test)
 
@@ -34,8 +32,8 @@ if __name__ == "__main__":
     parser.add_argument("--swap_ratio", type=float, default=None)
     parser.add_argument("--hidden_dims", nargs="+", type=int, default=[128, 128])
     parser.add_argument("--lr", type=float, default=1e-3)
-    parser.add_argument("--n_early_stop_steps", type=int, default=500)
     parser.add_argument("--batch_size", type=int, default=64)
+    parser.add_argument("--n_epochs", type=int, default=500)
     parser.add_argument("--n_workers", type=int, default=20)
     parser.add_argument("--is_multimodal", action="store_true")
     main(parser.parse_args())

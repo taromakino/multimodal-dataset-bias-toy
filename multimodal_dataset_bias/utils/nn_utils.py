@@ -30,9 +30,9 @@ def to_device(*args):
     return [arg.to(device()) for arg in args]
 
 
-def make_trainer(dpath, seed, n_early_stop_epochs):
+def make_trainer(dpath, seed, n_epochs):
     return pl.Trainer(
         logger=CSVLogger(dpath, name="", version=seed),
         callbacks=[
-            ModelCheckpoint(monitor="val_loss", filename="best"),
-            EarlyStopping(monitor="val_loss", patience=n_early_stop_epochs)])
+            ModelCheckpoint(monitor="val_loss", filename="best")],
+        max_epochs=n_epochs)
