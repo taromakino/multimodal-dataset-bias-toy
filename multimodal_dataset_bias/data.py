@@ -33,17 +33,17 @@ def make_raw_data(seed, data_dim, n_trainval, n_test, train_ratio, swap_ratio):
     n_total = n_trainval + n_test
     rng = np.random.RandomState(seed)
     if data_dim == 1:
-        u = rng.normal(loc=0, scale=1, size=n_total).astype("float32")
+        u = rng.normal(loc=0, scale=0.1, size=n_total).astype("float32")
         x0_noise = rng.normal(loc=0, scale=0.01, size=n_total).astype("float32")
         x1_noise = rng.normal(loc=0, scale=0.01, size=n_total).astype("float32")
     else:
-        u = rng.multivariate_normal(mean=np.zeros(data_dim), cov=np.diag(np.repeat(1 ** 2, data_dim)),
+        u = rng.multivariate_normal(mean=np.zeros(data_dim), cov=np.diag(np.repeat(0.1 ** 2, data_dim)),
             size=n_total).astype("float32")
         x0_noise = rng.multivariate_normal(mean=np.zeros(data_dim), cov=np.diag(np.repeat(0.01 ** 2, data_dim)),
             size=n_total).astype("float32")
         x1_noise = rng.multivariate_normal(mean=np.zeros(data_dim), cov=np.diag(np.repeat(0.01 ** 2, data_dim)),
             size=n_total).astype("float32")
-    y_noise = rng.normal(loc=0, scale=5, size=n_total).astype("float32")
+    y_noise = rng.normal(loc=0, scale=1, size=n_total).astype("float32")
     x0 = u + x0_noise
     x1 = u ** 2 + x1_noise
     x = np.c_[x0, x1]
