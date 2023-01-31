@@ -41,7 +41,7 @@ if __name__ == "__main__":
     parser.add_argument("--n_posteriors", type=int, default=512)
     parser.add_argument("--lr", type=float, default=1e-3)
     parser.add_argument("--batch_size", type=int, default=64)
-    parser.add_argument("--n_epochs", type=int, default=500)
+    parser.add_argument("--n_epochs", type=int, default=200)
     parser.add_argument("--n_workers", type=int, default=20)
     parser.add_argument("--is_test", action="store_true")
     main(parser.parse_args())
