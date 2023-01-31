@@ -31,13 +31,13 @@ def gaussian_nll(x, mu, logvar):
     return -dist.log_prob(x.squeeze())
 
 
-def gaussian_kld(mu_p, logvar_p, mu_q, logvar_q):
+def gaussian_kl(mu_p, logvar_p, mu_q, logvar_q):
     p = make_gaussian(mu_p, logvar_p)
     q = make_gaussian(mu_q, logvar_q)
     return torch.distributions.kl_divergence(p, q)
 
 
-def prior_kld(mu, logvar):
+def prior_kl(mu, logvar):
     return -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp(), dim=1)
 
 

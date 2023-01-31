@@ -40,7 +40,7 @@ def main(args):
     plot(axes[1], args.dpath, args.n_seeds, "n_train", args.n_train_range)
     axes[1].set_xlabel("Training set size")
     for ax in axes:
-        ax.set_ylabel("KLD")
+        ax.set_ylabel("KL")
     fig.tight_layout()
     os.makedirs("fig", exist_ok=True)
     plt.savefig(os.path.join("fig", "log_marginal_likelihood.pdf"), bbox_inches="tight")

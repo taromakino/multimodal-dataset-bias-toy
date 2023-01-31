@@ -5,7 +5,7 @@ import torch
 import torch.nn as nn
 from torch.optim import Adam
 from utils.nn_utils import MLP
-from utils.stats import gaussian_nll, log_avg_prob, make_gaussian, prior_kld
+from utils.stats import gaussian_nll, log_avg_prob, make_gaussian, prior_kl
 
 
 class GaussianMLP(nn.Module):
@@ -35,7 +35,7 @@ class Model(pl.LightningModule):
         self.decoder = GaussianMLP(2 * data_dim + latent_dim, [], 1)
         if checkpoint_fpath:
             self.load_state_dict(torch.load(checkpoint_fpath)["state_dict"])
-        if task == "posterior_kld":
+        if task == "posterior_kl":
             self.freeze()
             self.encoder_x.requires_grad_(True)
             self.test_mu_x, self.test_logvar_x = [], []
@@ -55,8 +55,8 @@ class Model(pl.LightningModule):
     def forward(self, x, y):
         if self.task == "vae":
             return self.elbo(x, y)
-        elif self.task == "posterior_kld":
-            return self.posterior_kld(x, y)
+        elif self.task == "posterior_kl":
+            return self.posterior_kl(x, y)
         elif self.task == "log_marginal_likelihood":
             return self.log_marginal_likelihood(x, y)
 
@@ -66,14 +66,14 @@ class Model(pl.LightningModule):
         z = self.sample_z(mu_xy, logvar_xy)
         mu_reconst, logvar_reconst = self.decoder(x, z)
         reconst_loss = gaussian_nll(y, mu_reconst, logvar_reconst)
-        kld_loss = prior_kld(mu_xy, logvar_xy)
+        kl_loss = prior_kl(mu_xy, logvar_xy)
         return {
-            "loss": (reconst_loss + kld_loss).mean(),
-            "kld": kld_loss.mean()
+            "loss": (reconst_loss + kl_loss).mean(),
+            "kl": kl_loss.mean()
         }
 
 
-    def posterior_kld(self, x, y):
+    def posterior_kl(self, x, y):
         mu_x, logvar_x = self.encoder_x(x)
         mu_xy, logvar_xy = self.encoder_xy(x, y)
         posterior_xy = make_gaussian(mu_xy, logvar_xy)
@@ -115,7 +115,7 @@ class Model(pl.LightningModule):
         out = self.forward(*batch)
         self.log("train_loss", out["loss"], on_step=False, on_epoch=True)
         if self.task == "vae":
-            self.log("train_kld", out["kld"], on_step=False, on_epoch=True)
+            self.log("train_kl", out["kl"], on_step=False, on_epoch=True)
         return out["loss"]
 
 
@@ -123,14 +123,14 @@ class Model(pl.LightningModule):
         out = self.forward(*batch)
         self.log("val_loss", out["loss"], on_step=False, on_epoch=True)
         if self.task == "vae":
-            self.log("val_kld", out["kld"], on_step=False, on_epoch=True)
+            self.log("val_kl", out["kl"], on_step=False, on_epoch=True)
 
 
     def test_step(self, batch, batch_idx):
         out = self.forward(*batch)
         if "loss" in out:
             self.log("test_loss", out["loss"], on_step=False, on_epoch=True)
-        if self.task == "posterior_kld":
+        if self.task == "posterior_kl":
             self.test_mu_x.append(out["mu_x"])
             self.test_logvar_x.append(out["logvar_x"])
         elif self.task == "log_marginal_likelihood":
@@ -139,14 +139,14 @@ class Model(pl.LightningModule):
 
 
     def test_epoch_end(self, outputs):
-        if self.task == "posterior_kld":
+        if self.task == "posterior_kl":
             self.test_mu_x = torch.vstack(self.test_mu_x)
             self.test_logvar_x = torch.vstack(self.test_logvar_x)
             torch.save((self.test_mu_x, self.test_logvar_x), os.path.join(self.dpath, f"version_{self.seed}", "posterior_params.pt"))
 
 
     def configure_optimizers(self):
-        if self.task == "posterior_kld":
+        if self.task == "posterior_kl":
             return Adam(self.encoder_x.parameters(), lr=self.lr)
         else:
             return Adam(self.parameters(), lr=self.lr)

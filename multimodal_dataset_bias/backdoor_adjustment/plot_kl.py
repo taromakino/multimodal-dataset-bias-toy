@@ -5,10 +5,10 @@ from argparse import ArgumentParser
 from utils.plot_settings import *
 
 
-def kld(fpath):
+def kl(fpath):
     df = pd.read_csv(fpath)
     idx = df.val_loss.argmin()
-    return df.val_kld[idx]
+    return df.val_kl[idx]
 
 
 def main(args):
@@ -19,7 +19,7 @@ def main(args):
         values = []
         for seed in range(args.n_seeds):
             fpath = os.path.join(args.dpath, f"swap_ratio={swap_ratio}", "vae", f"version_{seed}", "metrics.csv")
-            values.append(kld(fpath))
+            values.append(kl(fpath))
         means.append(np.mean(values))
         sds.append(np.std(values))
     axes[0].errorbar(range(len(means)), means, sds)
@@ -33,7 +33,7 @@ def main(args):
         values = []
         for seed in range(args.n_seeds):
             fpath = os.path.join(args.dpath, f"n_trainval={n_trainval}", "vae", f"version_{seed}", "metrics.csv")
-            values.append(kld(fpath))
+            values.append(kl(fpath))
         means.append(np.mean(values))
         sds.append(np.std(values))
     axes[1].errorbar(range(len(means)), means, sds)
@@ -51,5 +51,5 @@ if __name__ == "__main__":
     parser.add_argument("--dpath", type=str, default="results/backdoor_adjustment")
     parser.add_argument("--n_seeds", type=int, default=5)
     parser.add_argument("--swap_ratio_range", nargs="+", type=int, default=[0.0, 0.1, 0.2, 0.3, 0.4])
-    parser.add_argument("--n_trainval_range", nargs="+", type=int, default=[3200, 1600, 800, 400, 200])
+    parser.add_argument("--n_trainval_range", nargs="+", type=int, default=[6400, 3200, 1600, 800, 400])
     main(parser.parse_args())
