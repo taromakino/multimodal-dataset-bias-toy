@@ -45,7 +45,7 @@ def make_raw_data(seed, data_dim, n_trainval, n_test, train_ratio, swap_ratio):
             size=n_total).astype("float32")
     y_noise = rng.normal(loc=0, scale=1, size=n_total).astype("float32")
     x0 = u + x0_noise
-    x1 = u^2 + x1_noise
+    x1 = u ** 2 + x1_noise
     x = np.c_[x0, x1]
     y = row_mean(x0 + x1) + y_noise
 
