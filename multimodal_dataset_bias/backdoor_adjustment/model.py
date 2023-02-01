@@ -32,7 +32,7 @@ class Model(pl.LightningModule):
         self.n_posteriors = n_posteriors
         self.encoder_xy = GaussianMLP(2 * data_dim + 1, hidden_dims, latent_dim)
         self.encoder_x = GaussianMLP(2 * data_dim, hidden_dims, latent_dim)
-        self.decoder = MLP(2 * data_dim + latent_dim, [], 1)
+        self.decoder = MLP(2 * data_dim + latent_dim, hidden_dims, 1)
         if checkpoint_fpath:
             self.load_state_dict(torch.load(checkpoint_fpath)["state_dict"])
         if task == "posterior_kl":
