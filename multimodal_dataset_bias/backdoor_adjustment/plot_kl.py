@@ -25,7 +25,7 @@ def main(args):
     axes[0].errorbar(range(len(means)), means, sds)
     axes[0].set_xticks(range(len(args.s_shift_range)))
     axes[0].set_xticklabels(args.s_shift_range)
-    axes[0].set_xlabel("Swap ratio")
+    axes[0].set_xlabel(r"$c$")
     axes[0].set_ylabel("KL")
     # n_trainval
     means, sds = [], []
@@ -51,5 +51,5 @@ if __name__ == "__main__":
     parser.add_argument("--dpath", type=str, default="results/backdoor_adjustment")
     parser.add_argument("--n_seeds", type=int, default=5)
     parser.add_argument("--s_shift_range", nargs="+", type=float, default=[-2, -1, 0, 1, 2])
-    parser.add_argument("--n_trainval_range", nargs="+", type=int, default=[6400, 3200, 1600, 800, 400])
+    parser.add_argument("--n_trainval_range", nargs="+", type=int, default=[1600, 800, 400, 200, 100])
     main(parser.parse_args())

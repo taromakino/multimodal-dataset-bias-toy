@@ -32,7 +32,7 @@ class Model(pl.LightningModule):
         self.n_posteriors = n_posteriors
         self.encoder_xy = GaussianMLP(2 * data_dim + 1, hidden_dims, latent_dim)
         self.encoder_x = GaussianMLP(2 * data_dim, hidden_dims, latent_dim)
-        self.decoder = GaussianMLP(2 * data_dim + latent_dim, [], 1)
+        self.decoder = MLP(2 * data_dim + latent_dim, [], 1)
         if checkpoint_fpath:
             self.load_state_dict(torch.load(checkpoint_fpath)["state_dict"])
         if task == "posterior_kl":
@@ -64,7 +64,8 @@ class Model(pl.LightningModule):
     def elbo(self, x, y):
         mu_xy, logvar_xy = self.encoder_xy(x, y)
         z = self.sample_z(mu_xy, logvar_xy)
-        mu_reconst, logvar_reconst = self.decoder(x, z)
+        mu_reconst = self.decoder(x, z)
+        logvar_reconst = torch.zeros_like(mu_reconst) # Temporarily hard-coded for Var=1, make this configurable
         reconst_loss = gaussian_nll(y, mu_reconst, logvar_reconst)
         kl_loss = prior_kl(mu_xy, logvar_xy)
         return {
@@ -89,7 +90,8 @@ class Model(pl.LightningModule):
         mu_x, logvar_x = self.encoder_x(x)
         posterior_x = make_gaussian(mu_x, logvar_x)
         z = posterior_x.sample((self.n_samples,))
-        mu_reconst, logvar_reconst = self.decoder(x_rep, z)
+        mu_reconst = self.decoder(x_rep, z)
+        logvar_reconst = torch.zeros_like(mu_reconst) # Temporarily hard-coded for Var=1, make this configurable
         decoder_dist = make_gaussian(mu_reconst, logvar_reconst)
         logp_y_xz = decoder_dist.log_prob(y.squeeze())
         assert logp_y_xz.shape == torch.Size([self.n_samples])  # (n_samples,)
