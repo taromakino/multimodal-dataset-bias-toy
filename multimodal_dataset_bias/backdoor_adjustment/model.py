@@ -6,8 +6,7 @@ import torch.distributions as distributions
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.optim import Adam
-from utils.nn_utils import MixtureSameFamily
-from utils.stats import diag_gaussian_log_prob, log_avg_prob, make_gaussian
+from utils.stats import MixtureSameFamily, diag_gaussian_log_prob, log_avg_prob, make_gaussian
 
 
 class Encoder(nn.Module):
@@ -115,11 +114,11 @@ class Model(pl.LightningModule):
 
     def posterior_kl(self, x, y):
         mu_x, logvar_x = self.q_z_x_net(x)
-        mu_xy, logvar_xy = self.q_z_xy_net(x, y)
+        mu_xy, logvar_xy = self.q_z_xy_net(torch.hstack((x, y)))
         posterior_xy = make_gaussian(mu_xy, F.softplus(logvar_xy))
         posterior_x = make_gaussian(mu_x, F.softplus(logvar_x))
         return {
-            "loss": torch.distributions.kl_divergence(posterior_xy, posterior_x).mean(),
+            "loss": distributions.kl_divergence(posterior_xy, posterior_x).mean(),
             "mu_x": mu_x.detach().cpu(),
             "logvar_x": logvar_x.detach().cpu()}
 
@@ -129,7 +128,7 @@ class Model(pl.LightningModule):
         mu_x, logvar_x = self.q_z_x_net(x)
         posterior_x = make_gaussian(mu_x, F.softplus(logvar_x))
         z = posterior_x.sample((self.n_samples,))
-        mu_reconst = self.p_y_xz_net(x_rep, z)
+        mu_reconst = self.p_y_xz_net(torch.hstack((x_rep, z)))
         logvar_reconst = torch.zeros_like(mu_reconst) # Temporarily hard-coded for Var=1, make this configurable
         decoder_dist = make_gaussian(mu_reconst, F.softplus(logvar_reconst))
         logp_y_xz = decoder_dist.log_prob(y.squeeze())
