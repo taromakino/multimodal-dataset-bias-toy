@@ -16,7 +16,7 @@ def main(config):
         config.train_ratio, config.u_sd, config.x_sd, config.y_sd, config.s_shift, config.batch_size, config.n_workers)
     model = Model(seed, config.dpath, config.task, config.data_dim, config.latent_dim, config.n_components, config.lr,
         config.n_samples, config.n_posteriors, config.checkpoint_fpath, config.posterior_params_fpath)
-    trainer = make_trainer(config.dpath, seed, config.n_steps)
+    trainer = make_trainer(config.dpath, seed, config.n_steps, config.is_gpu)
     if config.is_test:
         trainer.test(model, data_test)
     else:
@@ -46,5 +46,6 @@ if __name__ == "__main__":
     parser.add_argument("--batch_size", type=int, default=128)
     parser.add_argument("--n_steps", type=int, default=2000)
     parser.add_argument("--n_workers", type=int, default=20)
+    parser.add_argument("--is_gpu", action="store_true")
     parser.add_argument("--is_test", action="store_true")
     main(parser.parse_args())
