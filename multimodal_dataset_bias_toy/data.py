@@ -33,11 +33,11 @@ def make_dataloader(data_tuple, batch_size, n_workers, is_train):
         pin_memory=True, persistent_workers=True)
 
 
-def make_standard_data(rng, data_dim, n_examples):
-    u = rng.multivariate_normal(mean=np.zeros(data_dim), cov=make_isotropic_cov(data_dim, 0.1), size=n_examples)
-    x0_noise = rng.multivariate_normal(mean=np.zeros(data_dim), cov=make_isotropic_cov(data_dim, 0.01), size=n_examples)
-    x1_noise = rng.multivariate_normal(mean=np.zeros(data_dim), cov=make_isotropic_cov(data_dim, 0.01), size=n_examples)
-    y_noise = rng.normal(loc=0, scale=1, size=n_examples)
+def make_standard_data(rng, data_dim, n_examples, u_sd, x_sd, y_sd):
+    u = rng.multivariate_normal(mean=np.zeros(data_dim), cov=make_isotropic_cov(data_dim, u_sd), size=n_examples)
+    x0_noise = rng.multivariate_normal(mean=np.zeros(data_dim), cov=make_isotropic_cov(data_dim, x_sd), size=n_examples)
+    x1_noise = rng.multivariate_normal(mean=np.zeros(data_dim), cov=make_isotropic_cov(data_dim, x_sd), size=n_examples)
+    y_noise = rng.normal(loc=0, scale=y_sd, size=n_examples)
     x0 = u + x0_noise
     x1 = u ** 2 + x1_noise
     x = np.c_[x0, x1]
@@ -45,30 +45,33 @@ def make_standard_data(rng, data_dim, n_examples):
     return u.astype("float32"), x.astype("float32"), y.astype("float32")
 
 
-def make_selection_biased_data(rng, data_dim, n_examples, s_shift):
-    x_all, y_all = [], []
+def make_selection_biased_data(rng, data_dim, n_examples, u_sd, x_sd, y_sd, s_shift):
+    u_all, x_all, y_all = [], [], []
     count = 0
     while count < n_examples:
-        u, x, y = make_standard_data(rng, data_dim, n_examples)
+        u, x, y = make_standard_data(rng, data_dim, n_examples, u_sd, x_sd, y_sd)
         collider = row_mean(u) * y
         collider = (collider - collider.mean()) / collider.std()
         prob = sigmoid(collider, s_shift)
         s = rng.binomial(1, prob)
         idxs = np.where(s == 1)[0]
+        u_all.append(u[idxs])
         x_all.append(x[idxs])
         y_all.append(y[idxs])
         count += len(idxs)
+    u_all = np.concatenate(u_all)[:n_examples]
     x_all = np.concatenate(x_all)[:n_examples]
     y_all = np.concatenate(y_all)[:n_examples]
-    return x_all, y_all
+    return u_all, x_all, y_all
 
 
-def make_data(seed, data_dim, n_trainval, n_test, train_ratio, s_shift, batch_size, n_workers):
+def make_data(seed, data_dim, n_trainval, n_test, train_ratio, u_sd, x_sd, y_sd, s_shift, batch_size, n_workers):
+    rng = np.random.RandomState(seed)
     if s_shift is None:
-        _, x_trainval, y_trainval = make_standard_data(np.random.RandomState(seed), data_dim, n_trainval)
+        _, x_trainval, y_trainval = make_standard_data(rng, data_dim, n_trainval, u_sd, x_sd, y_sd)
     else:
-        x_trainval, y_trainval = make_selection_biased_data(np.random.RandomState(seed), data_dim, n_trainval, s_shift)
-    _, x_test, y_test = make_standard_data(np.random.RandomState(2 ** 32 - 1), data_dim, n_test)
+        _, x_trainval, y_trainval = make_selection_biased_data(rng, data_dim, n_trainval, u_sd, x_sd, y_sd, s_shift)
+    _, x_test, y_test = make_standard_data(np.random.RandomState(2 ** 32 - 1), data_dim, n_test, u_sd, x_sd, y_sd)
 
     n_train = int(len(x_trainval) * train_ratio)
     x_train, y_train = x_trainval[:n_train], y_trainval[:n_train]

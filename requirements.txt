@@ -1,0 +1,6 @@
+# Python 3.10
+conditional_independence
+matplotlib
+pandas
+pytorch-lightning
+torch
