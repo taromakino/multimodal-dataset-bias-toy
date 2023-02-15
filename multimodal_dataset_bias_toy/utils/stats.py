@@ -1,8 +1,12 @@
+import sys
 import torch
 import torch.distributions as distributions
 import torch.nn.functional as F
 from torch.distributions.normal import Normal
 from torch.distributions.multivariate_normal import MultivariateNormal
+
+
+EPSILON = sys.float_info.epsilon
 
 
 class MixtureSameFamily(distributions.Distribution):

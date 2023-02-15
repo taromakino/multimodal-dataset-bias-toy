@@ -1,14 +1,13 @@
 import math
 import scipy.integrate as integrate
-import sys
 from scipy.stats import norm
+from utils.stats import EPSILON
 
 
 # LB = float("-inf")
 # UB = float("inf")
 LB = -3
 UB = 3
-EPSILON = sys.float_info.epsilon
 
 
 def logprob_u(u, u_sd):
