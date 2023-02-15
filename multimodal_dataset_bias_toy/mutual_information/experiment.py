@@ -1,16 +1,10 @@
 import os
-import pandas as pd
 import pytorch_lightning as pl
 from argparse import ArgumentParser
 from data import make_data
 from model import Mine
 from pytorch_lightning.loggers import CSVLogger
 from utils.file import save_file
-
-
-def test_mi(fpath):
-    df = pd.read_csv(fpath)
-    return -df.test_loss.iloc[-1]
 
 
 def make_trainer(dpath, seed, n_epochs):
@@ -34,9 +28,6 @@ def main(config):
     trainer_ux = make_trainer(os.path.join(config.dpath, "ux"), seed, config.n_epochs)
     trainer_ux.fit(model_ux, data_train)
     trainer_ux.test(model_ux, data_val)
-    mi_uxy = test_mi(os.path.join(config.dpath, "uxy", f"version_{seed}", "metrics.csv"))
-    mi_ux = test_mi(os.path.join(config.dpath, "ux", f"version_{seed}", "metrics.csv"))
-    print(mi_uxy - mi_ux)
 
 
 if __name__ == "__main__":
