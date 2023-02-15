@@ -65,22 +65,28 @@ def make_selection_biased_data(rng, data_dim, n_examples, u_sd, x_sd, y_sd, s_sh
     return u_all, x_all, y_all
 
 
-def make_data(seed, data_dim, n_trainval, n_test, train_ratio, u_sd, x_sd, y_sd, s_shift, batch_size, n_workers):
+def make_data(seed, data_dim, n_train, n_val, n_test, u_sd, x_sd, y_sd, s_shift, batch_size, include_u, n_workers):
+    n_trainval = n_train + n_val
     rng = np.random.RandomState(seed)
     if s_shift is None:
-        _, x_trainval, y_trainval = make_standard_data(rng, data_dim, n_trainval, u_sd, x_sd, y_sd)
+        u_trainval, x_trainval, y_trainval = make_standard_data(rng, data_dim, n_trainval, u_sd, x_sd, y_sd)
     else:
-        _, x_trainval, y_trainval = make_selection_biased_data(rng, data_dim, n_trainval, u_sd, x_sd, y_sd, s_shift)
-    _, x_test, y_test = make_standard_data(np.random.RandomState(2 ** 32 - 1), data_dim, n_test, u_sd, x_sd, y_sd)
+        u_trainval, x_trainval, y_trainval = make_selection_biased_data(rng, data_dim, n_trainval, u_sd, x_sd, y_sd, s_shift)
+    u_test, x_test, y_test = make_standard_data(np.random.RandomState(2 ** 32 - 1), data_dim, n_test, u_sd, x_sd, y_sd)
 
-    n_train = int(len(x_trainval) * train_ratio)
-    x_train, y_train = x_trainval[:n_train], y_trainval[:n_train]
-    x_val, y_val = x_trainval[n_train:], y_trainval[n_train:]
+    u_train, x_train, y_train = u_trainval[:n_train], x_trainval[:n_train], y_trainval[:n_train]
+    u_val, x_val, y_val = u_trainval[n_train:], x_trainval[n_train:], y_trainval[n_train:]
 
+    u_train, u_val, u_test = to_torch(*normalize(u_train, u_val, u_test))
     x_train, x_val, x_test = to_torch(*normalize(x_train, x_val, x_test))
     y_train, y_val, y_test = to_torch(y_train, y_val, y_test)
 
-    data_train = make_dataloader((x_train, y_train), batch_size, n_workers, True)
-    data_val = make_dataloader((x_val, y_val), batch_size, n_workers, False)
-    data_test = make_dataloader((x_test, y_test), 1, n_workers, False)
+    if include_u:
+        data_train = make_dataloader((u_train, x_train, y_train), batch_size, n_workers, True)
+        data_val = make_dataloader((u_val, x_val, y_val), batch_size, n_workers, False)
+        data_test = make_dataloader((u_test, x_test, y_test), 1, n_workers, False)
+    else:
+        data_train = make_dataloader((x_train, y_train), batch_size, n_workers, True)
+        data_val = make_dataloader((x_val, y_val), batch_size, n_workers, False)
+        data_test = make_dataloader((x_test, y_test), 1, n_workers, False)
     return data_train, data_val, data_test
