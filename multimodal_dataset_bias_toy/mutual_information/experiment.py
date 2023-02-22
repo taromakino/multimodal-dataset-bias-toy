@@ -16,12 +16,10 @@ def main(config):
         config.u_sd, config.x_sd, config.y_sd, config.s_shift, config.batch_size, None, None, True, config.n_workers)
     model_uxy = Mine(seed, config.data_dim, config.hidden_dims, True, config.lr)
     trainer_uxy = make_trainer(os.path.join(config.dpath, "uxy"), seed, config.n_epochs, config.n_gpus)
-    trainer_uxy.fit(model_uxy, data_train)
-    trainer_uxy.test(model_uxy, data_val)
+    trainer_uxy.fit(model_uxy, data_train, data_val)
     model_ux = Mine(seed, config.data_dim, config.hidden_dims, False, config.lr)
     trainer_ux = make_trainer(os.path.join(config.dpath, "ux"), seed, config.n_epochs, config.n_gpus)
-    trainer_ux.fit(model_ux, data_train)
-    trainer_ux.test(model_ux, data_val)
+    trainer_ux.fit(model_ux, data_train, data_val)
 
 
 if __name__ == "__main__":
