@@ -42,15 +42,15 @@ def make_standard_data(rng, data_dim, n_examples, u_sd, x_sd, y_sd):
     x1 = u ** 2 + x1_noise
     x = np.c_[x0, x1]
     y = row_mean(x0 + x1) + y_noise
-    return u.astype("float32"), x.astype("float32"), y.astype("float32")
+    return u.astype("float32"), x.astype("float32"), y.astype("float32"), y_noise.astype("float32")
 
 
 def make_selection_biased_data(rng, data_dim, n_examples, u_sd, x_sd, y_sd, s_shift):
     u_all, x_all, y_all = [], [], []
     count = 0
     while count < n_examples:
-        u, x, y = make_standard_data(rng, data_dim, n_examples, u_sd, x_sd, y_sd)
-        collider = row_mean(u) * y
+        u, x, y, y_noise = make_standard_data(rng, data_dim, n_examples, u_sd, x_sd, y_sd)
+        collider = row_mean(u) * y_noise
         collider = (collider - collider.mean()) / collider.std()
         prob = sigmoid(collider, s_shift)
         s = rng.binomial(1, prob)
@@ -70,10 +70,10 @@ def make_data(seed, data_dim, n_train, n_val, n_test, u_sd, x_sd, y_sd, s_shift,
     n_trainval = n_train + n_val
     rng = np.random.RandomState(seed)
     if s_shift is None:
-        u_trainval, x_trainval, y_trainval = make_standard_data(rng, data_dim, n_trainval, u_sd, x_sd, y_sd)
+        u_trainval, x_trainval, y_trainval, _ = make_standard_data(rng, data_dim, n_trainval, u_sd, x_sd, y_sd)
     else:
         u_trainval, x_trainval, y_trainval = make_selection_biased_data(rng, data_dim, n_trainval, u_sd, x_sd, y_sd, s_shift)
-    u_test, x_test, y_test = make_standard_data(np.random.RandomState(2 ** 32 - 1), data_dim, n_test, u_sd, x_sd, y_sd)
+    u_test, x_test, y_test, _ = make_standard_data(np.random.RandomState(2 ** 32 - 1), data_dim, n_test, u_sd, x_sd, y_sd)
 
     u_train, x_train, y_train = u_trainval[:n_train], x_trainval[:n_train], y_trainval[:n_train]
     u_val, x_val, y_val = u_trainval[n_train:], x_trainval[n_train:], y_trainval[n_train:]

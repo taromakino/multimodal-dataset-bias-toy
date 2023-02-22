@@ -7,7 +7,7 @@ from utils.plot import *
 
 def mutual_info(fpath):
     df = pd.read_csv(fpath)
-    return -df.test_loss.iloc[-1]
+    return -df.val_loss.min()
 
 
 def main(args):
