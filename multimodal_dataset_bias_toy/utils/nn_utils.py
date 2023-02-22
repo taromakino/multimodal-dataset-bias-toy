@@ -21,9 +21,10 @@ class MLP(nn.Module):
         return torch.squeeze(self.module_list(torch.hstack(args)))
 
 
-def make_trainer(dpath, seed, n_epochs):
+def make_trainer(dpath, seed, n_epochs, n_gpus):
     return pl.Trainer(
         logger=CSVLogger(dpath, name="", version=seed),
         callbacks=[
             ModelCheckpoint(monitor="val_loss", filename="best")],
-        max_epochs=n_epochs)
+        max_epochs=n_epochs,
+        gpus=n_gpus)

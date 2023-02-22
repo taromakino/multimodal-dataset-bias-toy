@@ -2,7 +2,7 @@ import numpy as np
 import os
 import pandas as pd
 from argparse import ArgumentParser
-from utils.plot_settings import *
+from utils.plot import *
 
 
 def log_marginal_likelihood(fpath):

@@ -65,7 +65,8 @@ def make_selection_biased_data(rng, data_dim, n_examples, u_sd, x_sd, y_sd, s_sh
     return u_all, x_all, y_all
 
 
-def make_data(seed, data_dim, n_train, n_val, n_test, u_sd, x_sd, y_sd, s_shift, batch_size, include_u, n_workers):
+def make_data(seed, data_dim, n_train, n_val, n_test, u_sd, x_sd, y_sd, s_shift, train_batch_size, val_batch_size,
+        test_batch_size, include_u, n_workers):
     n_trainval = n_train + n_val
     rng = np.random.RandomState(seed)
     if s_shift is None:
@@ -81,12 +82,17 @@ def make_data(seed, data_dim, n_train, n_val, n_test, u_sd, x_sd, y_sd, s_shift,
     x_train, x_val, x_test = to_torch(*normalize(x_train, x_val, x_test))
     y_train, y_val, y_test = to_torch(y_train, y_val, y_test)
 
+    if val_batch_size is None:
+        val_batch_size = len(x_val)
+    if test_batch_size is None:
+        test_batch_size = len(x_test)
+
     if include_u:
-        data_train = make_dataloader((u_train, x_train, y_train), batch_size, n_workers, True)
-        data_val = make_dataloader((u_val, x_val, y_val), batch_size, n_workers, False)
-        data_test = make_dataloader((u_test, x_test, y_test), 1, n_workers, False)
+        data_train = make_dataloader((u_train, x_train, y_train), train_batch_size, n_workers, True)
+        data_val = make_dataloader((u_val, x_val, y_val), val_batch_size, n_workers, False)
+        data_test = make_dataloader((u_test, x_test, y_test), test_batch_size, n_workers, False)
     else:
-        data_train = make_dataloader((x_train, y_train), batch_size, n_workers, True)
-        data_val = make_dataloader((x_val, y_val), batch_size, n_workers, False)
-        data_test = make_dataloader((x_test, y_test), 1, n_workers, False)
+        data_train = make_dataloader((x_train, y_train), train_batch_size, n_workers, True)
+        data_val = make_dataloader((x_val, y_val), val_batch_size, n_workers, False)
+        data_test = make_dataloader((x_test, y_test), test_batch_size, n_workers, False)
     return data_train, data_val, data_test

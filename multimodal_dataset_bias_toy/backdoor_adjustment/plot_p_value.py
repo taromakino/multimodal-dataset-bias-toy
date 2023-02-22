@@ -1,7 +1,7 @@
 import os
 import pandas as pd
 from argparse import ArgumentParser
-from utils.plot_settings import *
+from utils.plot import *
 from scipy.stats import ttest_ind
 
 

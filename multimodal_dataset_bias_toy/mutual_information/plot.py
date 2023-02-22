@@ -2,10 +2,10 @@ import numpy as np
 import os
 import pandas as pd
 from argparse import ArgumentParser
-from utils.plot_settings import *
+from utils.plot import *
 
 
-def test_mi(fpath):
+def mutual_info(fpath):
     df = pd.read_csv(fpath)
     return -df.test_loss.iloc[-1]
 
@@ -17,8 +17,8 @@ def main(args):
     for s_shift in args.s_shift_range:
         values = []
         for seed in range(args.n_seeds):
-            mi_uxy = test_mi(os.path.join(args.dpath, f"s_shift={s_shift}", "uxy", f"version_{seed}", "metrics.csv"))
-            mi_ux = test_mi(os.path.join(args.dpath, f"s_shift={s_shift}", "ux", f"version_{seed}", "metrics.csv"))
+            mi_uxy = mutual_info(os.path.join(args.dpath, f"s_shift={s_shift}", "uxy", f"version_{seed}", "metrics.csv"))
+            mi_ux = mutual_info(os.path.join(args.dpath, f"s_shift={s_shift}", "ux", f"version_{seed}", "metrics.csv"))
             values.append(mi_uxy - mi_ux)
         means.append(np.mean(values))
         sds.append(np.std(values))
@@ -32,8 +32,8 @@ def main(args):
     for n_train in args.n_train_range:
         values = []
         for seed in range(args.n_seeds):
-            mi_uxy = test_mi(os.path.join(args.dpath, f"n_train={n_train}", "uxy", f"version_{seed}", "metrics.csv"))
-            mi_ux = test_mi(os.path.join(args.dpath, f"n_train={n_train}", "ux", f"version_{seed}", "metrics.csv"))
+            mi_uxy = mutual_info(os.path.join(args.dpath, f"n_train={n_train}", "uxy", f"version_{seed}", "metrics.csv"))
+            mi_ux = mutual_info(os.path.join(args.dpath, f"n_train={n_train}", "ux", f"version_{seed}", "metrics.csv"))
             values.append(mi_uxy - mi_ux)
         means.append(np.mean(values))
         sds.append(np.std(values))

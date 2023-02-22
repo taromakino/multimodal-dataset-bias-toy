@@ -13,12 +13,13 @@ def main(config):
     os.makedirs(config.dpath, exist_ok=True)
     pl.seed_everything(seed)
     data_train, data_val, data_test = make_data(seed, config.data_dim, config.n_train, config.n_val, config.n_test,
-        config.u_sd, config.x_sd, config.y_sd, config.s_shift, config.batch_size, False, config.n_workers)
+        config.u_sd, config.x_sd, config.y_sd, config.s_shift, config.batch_size, config.batch_size, config.batch_size,
+        False, config.n_workers)
     model_class = Multimodal if config.is_multimodal else UnimodalEnsemble
     model = model_class(seed, config.dpath, config.data_dim, config.hidden_dims, config.lr)
-    trainer = make_trainer(config.dpath, seed, config.n_steps)
+    trainer = make_trainer(config.dpath, seed, config.n_epochs, config.n_gpus)
     trainer.fit(model, data_train, data_val)
-    trainer.test(model, data_test)
+    trainer.test(model, data_test, ckpt_path="best")
 
 
 if __name__ == "__main__":
@@ -37,6 +38,7 @@ if __name__ == "__main__":
     parser.add_argument("--hidden_dims", nargs="+", type=int, default=[128, 128])
     parser.add_argument("--lr", type=float, default=1e-3)
     parser.add_argument("--batch_size", type=int, default=128)
-    parser.add_argument("--n_steps", type=int, default=2000)
+    parser.add_argument("--n_epochs", type=int, default=200)
+    parser.add_argument("--n_gpus", type=int, default=1)
     parser.add_argument("--n_workers", type=int, default=20)
     main(parser.parse_args())
