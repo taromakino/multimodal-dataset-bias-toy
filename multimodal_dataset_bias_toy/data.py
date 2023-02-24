@@ -34,12 +34,12 @@ def make_dataloader(data_tuple, batch_size, n_workers, is_train):
 
 
 def make_standard_data(rng, data_dim, n_examples, u_sd, x_sd, y_sd):
-    u = rng.multivariate_normal(mean=np.zeros(data_dim), cov=make_isotropic_cov(data_dim, u_sd), size=n_examples)
+    u = rng.normal(loc=0, scale=u_sd, size=n_examples)
     x0_noise = rng.multivariate_normal(mean=np.zeros(data_dim), cov=make_isotropic_cov(data_dim, x_sd), size=n_examples)
     x1_noise = rng.multivariate_normal(mean=np.zeros(data_dim), cov=make_isotropic_cov(data_dim, x_sd), size=n_examples)
     y_noise = rng.normal(loc=0, scale=y_sd, size=n_examples)
-    x0 = u + x0_noise
-    x1 = u ** 2 + x1_noise
+    x0 = u * np.ones_like(x0_noise) + x0_noise
+    x1 = u ** 2 * np.ones_like(x1_noise) + x1_noise
     x = np.c_[x0, x1]
     y = row_mean(x0 + x1) + y_noise
     return u.astype("float32"), x.astype("float32"), y.astype("float32"), y_noise.astype("float32")
@@ -50,7 +50,7 @@ def make_selection_biased_data(rng, data_dim, n_examples, u_sd, x_sd, y_sd, s_sh
     count = 0
     while count < n_examples:
         u, x, y, y_noise = make_standard_data(rng, data_dim, n_examples, u_sd, x_sd, y_sd)
-        collider = row_mean(u) * y_noise
+        collider = u * y_noise
         collider = (collider - collider.mean()) / collider.std()
         prob = sigmoid(collider, s_shift)
         s = rng.binomial(1, prob)
