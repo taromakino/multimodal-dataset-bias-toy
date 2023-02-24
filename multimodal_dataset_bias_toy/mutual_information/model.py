@@ -12,7 +12,7 @@ class Mine(pl.LightningModule):
         self.seed = seed
         self.include_y = include_y
         self.lr = lr
-        self.net = MLP(3 * data_dim + (1 if include_y else 0), hidden_dims, 1)
+        self.net = MLP(1 + 2 * data_dim + (1 if include_y else 0), hidden_dims, 1)
 
 
     def loss(self, u, x, y):

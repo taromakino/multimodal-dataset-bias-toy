@@ -38,8 +38,8 @@ def make_standard_data(rng, data_dim, n_examples, u_sd, x_sd, y_sd):
     x0_noise = rng.multivariate_normal(mean=np.zeros(data_dim), cov=make_isotropic_cov(data_dim, x_sd), size=n_examples)
     x1_noise = rng.multivariate_normal(mean=np.zeros(data_dim), cov=make_isotropic_cov(data_dim, x_sd), size=n_examples)
     y_noise = rng.normal(loc=0, scale=y_sd, size=n_examples)
-    x0 = u * np.ones_like(x0_noise) + x0_noise
-    x1 = u ** 2 * np.ones_like(x1_noise) + x1_noise
+    x0 = u[:, None] * np.ones_like(x0_noise) + x0_noise
+    x1 = u[:, None] ** 2 * np.ones_like(x1_noise) + x1_noise
     x = np.c_[x0, x1]
     y = row_mean(x0 + x1) + y_noise
     return u.astype("float32"), x.astype("float32"), y.astype("float32"), y_noise.astype("float32")
