@@ -44,7 +44,7 @@ def main(args):
     axes[1].set_ylabel(r"$I(U; Y \mid X, X')$")
     fig.tight_layout()
     os.makedirs("fig", exist_ok=True)
-    plt.savefig(os.path.join("fig", "mutual_information.pdf"), bbox_inches="tight")
+    plt.savefig(os.path.join("fig", "mutual_information.png"), bbox_inches="tight")
 
 
 if __name__ == "__main__":
@@ -52,5 +52,5 @@ if __name__ == "__main__":
     parser.add_argument("--dpath", type=str, default="results/mutual_information")
     parser.add_argument("--n_seeds", type=int, default=5)
     parser.add_argument("--s_shift_range", nargs="+", type=float, default=[-4, -2, 0, 2, 4])
-    parser.add_argument("--n_train_range", nargs="+", type=int, default=[6400, 3200, 1600, 800, 400])
+    parser.add_argument("--n_train_range", nargs="+", type=int, default=[8000, 4000, 2000, 1000, 500])
     main(parser.parse_args())

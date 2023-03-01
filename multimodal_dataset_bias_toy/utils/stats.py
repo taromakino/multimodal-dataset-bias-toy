@@ -21,13 +21,5 @@ def make_gaussian(mu, var):
     return dist
 
 
-def bernoulli_log_prob(x, mu):
-    return (x * torch.log(mu) + (1 - x) * torch.log(1 - mu)).sum(-1)
-
-
-def log_avg_prob(x):
-    return -torch.log(torch.tensor(len(x))) + torch.logsumexp(x, 0)
-
-
 def row_mean(x):
     return x if len(x.shape) == 1 else x.mean(axis=1)
