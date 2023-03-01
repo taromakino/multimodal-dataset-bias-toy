@@ -36,7 +36,7 @@ if __name__ == "__main__":
     parser.add_argument("--x_sd", type=float, default=0.1)
     parser.add_argument("--y_sd", type=float, default=0.1)
     parser.add_argument("--s_shift", type=float, default=None)
-    parser.add_argument("--lr", type=float, default=0.1)
+    parser.add_argument("--lr", type=float, default=0.01)
     parser.add_argument("--batch_size", type=int, default=128)
     parser.add_argument("--n_epochs", type=int, default=200)
     parser.add_argument("--n_gpus", type=int, default=1)
