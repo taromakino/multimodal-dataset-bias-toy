@@ -20,7 +20,7 @@ def main(config):
     os.makedirs(config.dpath, exist_ok=True)
     pl.seed_everything(seed)
     data_train, data_val, data_test = make_data(seed, config.data_dim, config.n_examples, config.u_sd, config.x_sd,
-        config.y_sd, config.alpha, False, True, config.batch_size, config.n_workers)
+        config.y_sd, config.s_shift, False, True, config.batch_size, config.n_workers)
     model = Model(seed, config.dpath, config.y_sd, config.lr)
     trainer = make_trainer(config.dpath, seed, config.n_epochs, config.n_gpus)
     trainer.fit(model, data_train)
@@ -35,7 +35,7 @@ if __name__ == "__main__":
     parser.add_argument("--u_sd", type=float, default=0.1)
     parser.add_argument("--x_sd", type=float, default=0.1)
     parser.add_argument("--y_sd", type=float, default=0.1)
-    parser.add_argument("--alpha", type=float, default=None)
+    parser.add_argument("--s_shift", type=float, default=None)
     parser.add_argument("--lr", type=float, default=1e-3)
     parser.add_argument("--batch_size", type=int, default=128)
     parser.add_argument("--n_epochs", type=int, default=200)

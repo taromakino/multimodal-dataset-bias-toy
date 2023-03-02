@@ -12,17 +12,17 @@ def abs_alpha(fpath):
 
 def main(args):
     fig, axes = plt.subplots(1, 2, figsize=(7.5, 2.5))
-    # alpha
+    # s_shift
     means, sds = [], []
-    for alpha in args.alpha_range:
+    for s_shift in args.s_shift_range:
         values = []
         for seed in range(args.n_seeds):
-            values.append(abs_alpha(os.path.join(args.dpath, f"alpha={alpha}", f"version_{seed}", "metrics.csv")))
+            values.append(abs_alpha(os.path.join(args.dpath, f"s_shift={s_shift}", f"version_{seed}", "metrics.csv")))
         means.append(np.mean(values))
         sds.append(np.std(values))
     axes[0].errorbar(range(len(means)), means, sds)
-    axes[0].set_xticks(range(len(args.alpha_range)))
-    axes[0].set_xticklabels(args.alpha_range)
+    axes[0].set_xticks(range(len(args.s_shift_range)))
+    axes[0].set_xticklabels(args.s_shift_range)
     axes[0].set_xlabel(r"$c$")
     axes[0].set_ylabel(r"$|\alpha|$")
     # n_train
@@ -47,6 +47,6 @@ if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument("--dpath", type=str, default="results/modified_graph")
     parser.add_argument("--n_seeds", type=int, default=5)
-    parser.add_argument("--alpha_range", nargs="+", type=float, default=[-4, -2, 0, 2, 4])
+    parser.add_argument("--s_shift_range", nargs="+", type=float, default=[-4, -2, 0, 2, 4])
     parser.add_argument("--n_train_range", nargs="+", type=int, default=[25600, 6400, 1600, 400, 100])
     main(parser.parse_args())
