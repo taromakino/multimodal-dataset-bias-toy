@@ -21,5 +21,10 @@ def make_gaussian(mu, var):
     return dist
 
 
+def diag_gaussian_log_prob(x, mu, var, device):
+    c = 2 * torch.pi * torch.ones(1).to(device)
+    return (-0.5 * (torch.log(c) + var.log() + (x - mu).pow(2).div(var))).sum(-1)
+
+
 def row_mean(x):
     return x if len(x.shape) == 1 else x.mean(axis=1)
