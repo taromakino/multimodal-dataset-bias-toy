@@ -39,7 +39,7 @@ class Model(pl.LightningModule):
 
     def sample_z(self, mu, var):
         sd = var.sqrt()
-        eps = torch.randn(self.n_samples, sd.shape[1])
+        eps = torch.randn(self.n_samples, sd.shape[1]).to(self.device)
         return mu + eps * sd
 
 
