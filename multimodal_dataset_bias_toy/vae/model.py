@@ -37,14 +37,21 @@ class Model(pl.LightningModule):
         nn.init.xavier_normal_(self.logvar_z_c)
 
 
-    def training_loss(self, x, y):
+    def sample_z(self, mu, var):
+        sd = var.sqrt()
+        eps = torch.randn(self.n_samples, sd.shape[1])
+        return mu + eps * sd
+
+
+    def loss(self, x, y):
         '''
         Assume batch_size=1
         '''
         # z ~ q(z|x,y)
         mu_z_xy, var_z_xy = self.q_z_xy_net(x, y)
-        dist_z_xy = make_gaussian(mu_z_xy[None, :], var_z_xy[None, :])
-        z = dist_z_xy.sample((self.n_samples,))
+        mu_z_xy, var_z_xy = mu_z_xy[None, :], var_z_xy[None, :]
+        dist_z_xy = make_gaussian(mu_z_xy, var_z_xy)
+        z = self.sample_z(mu_z_xy, var_z_xy)
         # E_q(z|x,y)[log p(y|x,z)]
         x_rep = torch.repeat_interleave(x, repeats=self.n_samples, dim=0)
         mu_y_xz = self.p_y_xz_net(x_rep, z)[:, None]
@@ -66,20 +73,20 @@ class Model(pl.LightningModule):
 
 
     def training_step(self, batch, batch_idx):
-        out = self.training_loss(*batch)
+        out = self.loss(*batch)
         self.log("train_loss", out["loss"], on_step=False, on_epoch=True)
         self.log("train_kl", out["kl"], on_step=False, on_epoch=True)
         return out["loss"]
 
 
     def validation_step(self, batch, batch_idx):
-        out = self.training_loss(*batch)
+        out = self.loss(*batch)
         self.log("val_loss", out["loss"], on_step=False, on_epoch=True)
         self.log("val_kl", out["kl"], on_step=False, on_epoch=True)
 
 
     def test_step(self, batch, batch_idx):
-        out = self.training_loss(*batch)
+        out = self.loss(*batch)
         self.log("test_loss", out["loss"], on_step=False, on_epoch=True)
 
 
