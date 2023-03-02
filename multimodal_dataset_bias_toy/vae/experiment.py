@@ -12,9 +12,9 @@ def main(config):
     save_file(config, os.path.join(config.dpath, "args.pkl"))
     os.makedirs(config.dpath, exist_ok=True)
     pl.seed_everything(seed)
-    data_train, data_val, data_test = make_data(seed, config.data_dim, config.n_examples, config.u_sd, config.x_sd,
+    data_train, data_val, data_test = make_data(seed, config.input_dim, config.n_examples, config.u_sd, config.x_sd,
         config.y_sd, config.s_shift, True, False, config.batch_size, config.n_workers)
-    model = Model(seed, config.dpath, config.data_dim, config.y_sd, config.hidden_dims, config.latent_dim,
+    model = Model(seed, config.dpath, config.input_dim, config.y_sd, config.hidden_dims, config.latent_dim,
         config.n_components, config.n_samples, config.lr)
     trainer = make_trainer(config.dpath, seed, config.n_accumulate, config.n_epochs, config.n_gpus)
     if config.is_test:
@@ -27,7 +27,7 @@ if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument("--dpath", type=str, default="results")
     parser.add_argument("--seed", type=int, default=0)
-    parser.add_argument("--data_dim", type=int, default=1)
+    parser.add_argument("--input_dim", type=int, default=1)
     parser.add_argument("--n_examples", nargs="+", type=int, default=[10000, 1000, 1000])
     parser.add_argument("--u_sd", type=float, default=0.1)
     parser.add_argument("--x_sd", type=float, default=0.1)

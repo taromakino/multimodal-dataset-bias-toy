@@ -5,7 +5,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.optim import Adam
 from utils.nn_utils import MLP
-from utils.stats import diag_gaussian_log_prob, make_gaussian
+from utils.stats import diag_gaussian_log_prob
 
 
 class GaussianMLP(nn.Module):
@@ -19,7 +19,7 @@ class GaussianMLP(nn.Module):
 
 
 class Model(pl.LightningModule):
-    def __init__(self, seed, dpath, data_dim, y_sd, hidden_dims, latent_dim, n_components, n_samples, lr):
+    def __init__(self, seed, dpath, input_dim, y_sd, hidden_dims, latent_dim, n_components, n_samples, lr):
         super().__init__()
         self.save_hyperparameters()
         self.seed = seed
@@ -27,9 +27,9 @@ class Model(pl.LightningModule):
         self.y_sd = y_sd
         self.n_samples = n_samples
         self.lr = lr
-        self.q_z_xy_net = GaussianMLP(2 * data_dim + 1, hidden_dims, latent_dim)
-        self.q_z_x_net = GaussianMLP(2 * data_dim, hidden_dims, latent_dim)
-        self.p_y_xz_net = MLP(2 * data_dim + latent_dim, hidden_dims, 1)
+        self.q_z_xy_net = GaussianMLP(2 * input_dim + 1, hidden_dims, latent_dim)
+        self.q_z_x_net = GaussianMLP(2 * input_dim, hidden_dims, latent_dim)
+        self.p_y_xz_net = MLP(2 * input_dim + latent_dim, hidden_dims, 1)
         self.logits_c = nn.Parameter(torch.ones(n_components))
         self.mu_z_c = nn.Parameter(torch.zeros(n_components, latent_dim))
         self.logvar_z_c = nn.Parameter(torch.zeros(n_components, latent_dim))

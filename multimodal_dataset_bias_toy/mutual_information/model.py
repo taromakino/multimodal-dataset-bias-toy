@@ -6,13 +6,13 @@ from utils.nn_utils import MLP
 
 
 class Mine(pl.LightningModule):
-    def __init__(self, seed, data_dim, hidden_dims, include_y, lr):
+    def __init__(self, seed, input_dim, hidden_dims, include_y, lr):
         super().__init__()
         self.save_hyperparameters()
         self.seed = seed
         self.include_y = include_y
         self.lr = lr
-        self.net = MLP(1 + 2 * data_dim + (1 if include_y else 0), hidden_dims, 1)
+        self.net = MLP(1 + 2 * input_dim + (1 if include_y else 0), hidden_dims, 1)
 
 
     def loss(self, u, x, y):

@@ -1,11 +1,8 @@
 import pytorch_lightning as pl
 import torch
-import torch.distributions as D
 import torch.nn as nn
-import torch.nn.functional as F
 from torch.optim import Adam
-from utils.nn_utils import MLP
-from utils.stats import make_gaussian
+from utils.stats import diag_gaussian_log_prob
 
 
 class Model(pl.LightningModule):
@@ -23,8 +20,7 @@ class Model(pl.LightningModule):
         x0, x1 = torch.chunk(x, 2, 1)
         mu_y_ux = (x0.mean(dim=1) + x1.mean(dim=1))[:, None] + self.alpha * u
         var_y_ux = self.y_sd ** 2 * torch.ones_like(mu_y_ux)
-        dist_y_ux = make_gaussian(mu_y_ux, var_y_ux)
-        log_p_y_ux = dist_y_ux.log_prob(y.squeeze()).mean()
+        log_p_y_ux = diag_gaussian_log_prob(y, mu_y_ux, var_y_ux, self.device).mean()
         return -log_p_y_ux
 
 
