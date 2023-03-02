@@ -47,6 +47,8 @@ class Model(pl.LightningModule):
         # z ~ q(z|x,y)
         mu_z_xy, var_z_xy = self.q_z_xy_net(x, y)
         mu_z_xy, var_z_xy = mu_z_xy, var_z_xy
+        if len(mu_z_xy.shape) == 1:
+            mu_z_xy, var_z_xy = mu_z_xy[:, None], var_z_xy[:, None]
         z = self.sample_z(mu_z_xy, var_z_xy)
         log_q_z_xy = diag_gaussian_log_prob(z, mu_z_xy, var_z_xy, self.device).view(-1)
         # E_q(z|x,y)[log p(y|x,z)]
