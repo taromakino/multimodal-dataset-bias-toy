@@ -19,12 +19,13 @@ class GaussianMLP(nn.Module):
 
 
 class Model(pl.LightningModule):
-    def __init__(self, seed, dpath, data_dim, y_sd, hidden_dims, latent_dim, n_components, lr):
+    def __init__(self, seed, dpath, data_dim, y_sd, hidden_dims, latent_dim, n_components, n_samples, lr):
         super().__init__()
         self.save_hyperparameters()
         self.seed = seed
         self.dpath = dpath
         self.y_sd = y_sd
+        self.n_samples = n_samples
         self.lr = lr
         self.q_z_xy_net = GaussianMLP(2 * data_dim + 1, hidden_dims, latent_dim)
         self.q_z_x_net = GaussianMLP(2 * data_dim, hidden_dims, latent_dim)
@@ -36,22 +37,17 @@ class Model(pl.LightningModule):
         nn.init.xavier_normal_(self.logvar_z_c)
 
 
-    def sample_z(self, mu, var):
-        if self.training:
-            sd = var.sqrt()
-            eps = torch.randn_like(sd)
-            return mu + eps * sd
-        else:
-            return mu
-
-
     def training_loss(self, x, y):
+        '''
+        Assume batch_size=1
+        '''
         # z ~ q(z|x,y)
         mu_z_xy, var_z_xy = self.q_z_xy_net(x, y)
-        dist_z_xy = make_gaussian(mu_z_xy, var_z_xy)
-        z = self.sample_z(mu_z_xy, var_z_xy)
-        # E_q(c,z|x,y)[log p(y|x,z)]
-        mu_y_xz = self.p_y_xz_net(x, z)[:, None]
+        dist_z_xy = make_gaussian(mu_z_xy[None, :], var_z_xy[None, :])
+        z = dist_z_xy.sample((self.n_samples,))
+        # E_q(z|x,y)[log p(y|x,z)]
+        x_rep = torch.repeat_interleave(x, repeats=self.n_samples, dim=0)
+        mu_y_xz = self.p_y_xz_net(x_rep, z)[:, None]
         var_y_xz = self.y_sd ** 2 * torch.ones_like(mu_y_xz)
         dist_y_xz = make_gaussian(mu_y_xz, var_y_xz)
         log_p_y_xz = dist_y_xz.log_prob(y.squeeze()).mean()
