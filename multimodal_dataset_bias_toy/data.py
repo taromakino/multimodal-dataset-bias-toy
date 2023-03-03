@@ -76,10 +76,10 @@ def make_data(seed, input_dim, n_examples, u_sd, x_sd, y_sd, s_shift, is_normali
     n_trainval = n_train + n_val
     rng = np.random.RandomState(seed)
     if s_shift is None:
-        u_trainval, x_trainval, y_trainval = make_standard_data(rng, input_dim, n_trainval, u_sd, x_sd, y_sd)
+        u_trainval, x_trainval, y_trainval, _ = make_standard_data(rng, input_dim, n_trainval, u_sd, x_sd, y_sd)
     else:
         u_trainval, x_trainval, y_trainval = make_selection_biased_data(rng, input_dim, n_trainval, u_sd, x_sd, y_sd, s_shift)
-    u_test, x_test, y_test = make_standard_data(np.random.RandomState(2 ** 32 - 1), input_dim, n_test, u_sd, x_sd, y_sd)
+    u_test, x_test, y_test, _ = make_standard_data(np.random.RandomState(2 ** 32 - 1), input_dim, n_test, u_sd, x_sd, y_sd)
 
     u_train, x_train, y_train = u_trainval[:n_train], x_trainval[:n_train], y_trainval[:n_train]
     u_val, x_val, y_val = u_trainval[n_train:], x_trainval[n_train:], y_trainval[n_train:]

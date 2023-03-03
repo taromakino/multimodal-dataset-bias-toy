@@ -34,7 +34,7 @@ if __name__ == "__main__":
     parser.add_argument("--y_sd", type=float, default=0.1)
     parser.add_argument("--s_shift", type=float, default=None)
     parser.add_argument("--hidden_dims", nargs="+", type=int, default=[128, 128])
-    parser.add_argument("--latent_dim", type=int, default=1)
+    parser.add_argument("--latent_dim", type=int, default=16)
     parser.add_argument("--n_components", type=int, default=16)
     parser.add_argument("--n_samples", type=int, default=512)
     parser.add_argument("--lr", type=float, default=1e-4)
