@@ -34,23 +34,29 @@ def make_dataloader(data_tuple, batch_size, n_workers, is_train):
 
 
 def make_standard_data(rng, input_dim, n_examples, u_sd, x_sd, y_sd):
-    u = rng.multivariate_normal(mean=np.zeros(input_dim), cov=make_isotropic_cov(input_dim, u_sd), size=n_examples)
-    x0_noise = rng.multivariate_normal(mean=np.zeros(input_dim), cov=make_isotropic_cov(input_dim, x_sd), size=n_examples)
-    x1_noise = rng.multivariate_normal(mean=np.zeros(input_dim), cov=make_isotropic_cov(input_dim, x_sd), size=n_examples)
-    y_noise = rng.multivariate_normal(mean=np.zeros(input_dim), cov=make_isotropic_cov(input_dim, y_sd), size=n_examples)
-    x0 = u + x0_noise
-    x1 = u ** 2 + x1_noise
+    u = rng.normal(loc=0, scale=u_sd, size=n_examples)
+    eps_x0 = rng.multivariate_normal(mean=np.zeros(input_dim), cov=make_isotropic_cov(input_dim, x_sd), size=n_examples)
+    eps_x1 = rng.multivariate_normal(mean=np.zeros(input_dim), cov=make_isotropic_cov(input_dim, x_sd), size=n_examples)
+    eps_y = rng.normal(loc=0, scale=y_sd, size=n_examples)
+    x0 = u[:, None] * np.ones_like(eps_x0) + eps_x0
+    x1 = u[:, None] ** 2 * np.ones_like(eps_x1) + eps_x1
     x = np.c_[x0, x1]
-    y = x0 + x1 + y_noise
-    return u.astype("float32"), x.astype("float32"), y.astype("float32")
+    y = row_mean(x0 + x1) + eps_y
+    return u.astype("float32"), x.astype("float32"), y.astype("float32"), eps_y.astype("float32")
 
 
 def make_selection_biased_data(rng, input_dim, n_examples, u_sd, x_sd, y_sd, s_shift):
     u_all, x_all, y_all = [], [], []
     count = 0
     while count < n_examples:
-        u, x, y = make_standard_data(rng, input_dim, n_examples, u_sd, x_sd, y_sd)
-        collider = (u * y).sum(axis=1)
+        u, x, y, eps_y = make_standard_data(rng, input_dim, n_examples, u_sd, x_sd, y_sd)
+        '''
+        The form of the dependency between u and eps_y must depend on y. This ensures that the dependency is learned by
+        the encoder, which has access to y. Therefore, make Cov(u, eps_y) positive when eps_y > 0, and negative otherwise.   
+        '''
+        collider = u * eps_y
+        neg_idxs = np.where(eps_y < 0)
+        collider[neg_idxs] *= -1
         collider = (collider - collider.mean()) / collider.std()
         prob = sigmoid(collider, s_shift)
         s = rng.binomial(1, prob)

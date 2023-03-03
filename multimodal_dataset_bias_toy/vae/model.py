@@ -27,9 +27,9 @@ class Model(pl.LightningModule):
         self.y_sd = y_sd
         self.n_samples = n_samples
         self.lr = lr
-        self.q_z_xy_net = GaussianMLP(3 * input_dim, hidden_dims, latent_dim)
+        self.q_z_xy_net = GaussianMLP(2 * input_dim + 1, hidden_dims, latent_dim)
         self.q_z_x_net = GaussianMLP(2 * input_dim, hidden_dims, latent_dim)
-        self.p_y_xz_net = MLP(2 * input_dim + latent_dim, hidden_dims, input_dim)
+        self.p_y_xz_net = MLP(2 * input_dim + latent_dim, hidden_dims, 1)
         self.logits_c = nn.Parameter(torch.ones(n_components))
         self.mu_z_c = nn.Parameter(torch.zeros(n_components, latent_dim))
         self.logvar_z_c = nn.Parameter(torch.zeros(n_components, latent_dim))
@@ -55,7 +55,7 @@ class Model(pl.LightningModule):
         x = torch.repeat_interleave(x[None], repeats=self.n_samples, dim=0)
         y = torch.repeat_interleave(y[None], repeats=self.n_samples, dim=0)
         x, y, z = x.view(-1, x.shape[-1]), y.view(-1, y.shape[-1]), z.view(-1, z.shape[-1])
-        mu_y_xz = self.p_y_xz_net(x, z)
+        mu_y_xz = self.p_y_xz_net(x, z)[:, None]
         var_y_xz = self.y_sd ** 2 * torch.ones_like(mu_y_xz)
         log_p_y_xz = diag_gaussian_log_prob(y, mu_y_xz, var_y_xz, self.device).mean()
         # KL(q(z|x,y) || p(z))
