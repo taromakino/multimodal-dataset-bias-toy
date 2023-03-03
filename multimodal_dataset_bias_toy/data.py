@@ -50,7 +50,7 @@ def make_selection_biased_data(rng, input_dim, n_examples, u_sd, x_sd, y_sd, s_s
     count = 0
     while count < n_examples:
         u, x, y = make_standard_data(rng, input_dim, n_examples, u_sd, x_sd, y_sd)
-        collider = u * y
+        collider = u * np.sin(y)
         collider = (collider - collider.mean()) / collider.std()
         prob = sigmoid(collider, s_shift)
         s = rng.binomial(1, prob)
