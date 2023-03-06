@@ -50,7 +50,13 @@ def make_selection_biased_data(rng, input_dim, n_examples, u_sd, x_sd, y_sd, s_s
     count = 0
     while count < n_examples:
         u, x, y, eps_y = make_standard_data(rng, input_dim, n_examples, u_sd, x_sd, y_sd)
+        '''
+        The form of the dependency between u and eps_y must depend on y. This ensures that the dependency is learned by
+        the encoder, which has access to y. Therefore, make Cov(u, eps_y) positive when eps_y > 0, and negative otherwise.   
+        '''
         collider = u * eps_y
+        neg_idxs = np.where(eps_y < 0)
+        collider[neg_idxs] *= -1
         collider = (collider - collider.mean()) / collider.std()
         prob = sigmoid(collider, s_shift)
         s = rng.binomial(1, prob)
