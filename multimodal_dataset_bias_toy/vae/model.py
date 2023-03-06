@@ -19,11 +19,9 @@ class GaussianMLP(nn.Module):
 
 
 class Model(pl.LightningModule):
-    def __init__(self, seed, dpath, input_dim, y_sd, hidden_dims, latent_dim, n_components, n_samples, lr):
+    def __init__(self, input_dim, y_sd, hidden_dims, latent_dim, n_components, n_samples, lr):
         super().__init__()
         self.save_hyperparameters()
-        self.seed = seed
-        self.dpath = dpath
         self.y_sd = y_sd
         self.n_samples = n_samples
         self.lr = lr
@@ -44,27 +42,29 @@ class Model(pl.LightningModule):
 
 
     def loss(self, x, y):
+        batch_size = len(x) # For assertions
         # z ~ q(z|x,y)
         mu_z_xy, var_z_xy = self.q_z_xy_net(x, y)
-        mu_z_xy, var_z_xy = mu_z_xy, var_z_xy
-        if len(mu_z_xy.shape) == 1:
-            mu_z_xy, var_z_xy = mu_z_xy[:, None], var_z_xy[:, None]
         z = self.sample_z(mu_z_xy, var_z_xy)
         log_q_z_xy = diag_gaussian_log_prob(z, mu_z_xy, var_z_xy, self.device).view(-1)
+        assert log_q_z_xy.shape == (self.n_samples * batch_size,)
         # E_q(z|x,y)[log p(y|x,z)]
         x = torch.repeat_interleave(x[None], repeats=self.n_samples, dim=0)
         y = torch.repeat_interleave(y[None], repeats=self.n_samples, dim=0)
         x, y, z = x.view(-1, x.shape[-1]), y.view(-1, y.shape[-1]), z.view(-1, z.shape[-1])
         mu_y_xz = self.p_y_xz_net(x, z)[:, None]
         var_y_xz = self.y_sd ** 2 * torch.ones_like(mu_y_xz)
-        log_p_y_xz = diag_gaussian_log_prob(y, mu_y_xz, var_y_xz, self.device).mean()
+        log_p_y_xz = diag_gaussian_log_prob(y, mu_y_xz, var_y_xz, self.device)
+        assert log_p_y_xz.shape == (self.n_samples * batch_size,)
         # KL(q(z|x,y) || p(z))
         dist_c = D.Categorical(logits=self.logits_c)
         var_z_c = F.softplus(self.logvar_z_c)
         dist_z_c = D.Independent(D.Normal(self.mu_z_c, var_z_c.sqrt()), 1)
         dist_z = D.MixtureSameFamily(dist_c, dist_z_c)
-        kl = (log_q_z_xy - dist_z.log_prob(z)).mean()
-        elbo = log_p_y_xz - kl
+        log_p_z = dist_z.log_prob(z)
+        assert log_p_z.shape == (self.n_samples * batch_size,)
+        kl = (log_q_z_xy - log_p_z).mean()
+        elbo = log_p_y_xz.mean() - kl
         return {
             "loss": -elbo,
             "kl": kl
