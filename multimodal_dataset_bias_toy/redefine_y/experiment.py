@@ -19,7 +19,7 @@ def main(config):
     save_file(config, os.path.join(config.dpath, "args.pkl"))
     os.makedirs(config.dpath, exist_ok=True)
     pl.seed_everything(seed)
-    data_train, data_val, data_test = make_data(seed, config.input_dim, config.n_train, config.n_val, config.u_sd,
+    data_train, data_val = make_data(seed, config.input_dim, config.n_train, config.n_val, config.u_sd,
         config.x_sd, config.y_sd, False, True, config.batch_size, config.n_workers)
     model = Model(seed, config.dpath, config.y_sd, config.lr)
     trainer = make_trainer(config.dpath, seed, config.n_epochs, config.n_gpus)
@@ -30,7 +30,7 @@ if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument("--dpath", type=str, default="results")
     parser.add_argument("--seed", type=int, default=0)
-    parser.add_argument("--input_dim", type=int, default=1)
+    parser.add_argument("--input_dim", type=int, default=16)
     parser.add_argument("--n_train", type=int, default=10000)
     parser.add_argument("--n_val", type=int, default=1000)
     parser.add_argument("--u_sd", type=float, default=1)
