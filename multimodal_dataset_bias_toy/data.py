@@ -4,20 +4,15 @@ from torch.utils.data import DataLoader, TensorDataset
 from utils.stats import row_mean
 
 
-def sigmoid(x, shift):
-    return 1 / (1 + np.exp(-(x - shift)))
-
-
 def make_isotropic_cov(dim, sd):
     return np.diag(np.repeat(sd ** 2, dim))
 
 
-def normalize(x_train, x_val, x_test):
+def normalize(x_train, x_val):
     x_mean, x_sd = x_train.mean(axis=0), x_train.std(axis=0)
     x_train = (x_train - x_mean) / x_sd
     x_val = (x_val - x_mean) / x_sd
-    x_test = (x_test - x_mean) / x_sd
-    return x_train, x_val, x_test
+    return x_train, x_val
 
 
 def to_torch(*arrs):
@@ -33,7 +28,7 @@ def make_dataloader(data_tuple, batch_size, n_workers, is_train):
         pin_memory=True, persistent_workers=True)
 
 
-def make_standard_data(rng, input_dim, n_examples, u_sd, x_sd, y_sd):
+def make_raw_data(rng, input_dim, n_examples, u_sd, x_sd, y_sd):
     u = rng.normal(loc=0, scale=u_sd, size=n_examples)
     eps_x0 = rng.multivariate_normal(mean=np.zeros(input_dim), cov=make_isotropic_cov(input_dim, x_sd), size=n_examples)
     eps_x1 = rng.multivariate_normal(mean=np.zeros(input_dim), cov=make_isotropic_cov(input_dim, x_sd), size=n_examples)
@@ -45,59 +40,26 @@ def make_standard_data(rng, input_dim, n_examples, u_sd, x_sd, y_sd):
     return u.astype("float32"), x.astype("float32"), y.astype("float32"), eps_y.astype("float32")
 
 
-def make_selection_biased_data(rng, input_dim, n_examples, u_sd, x_sd, y_sd, s_shift):
-    u_all, x_all, y_all = [], [], []
-    count = 0
-    while count < n_examples:
-        u, x, y, eps_y = make_standard_data(rng, input_dim, n_examples, u_sd, x_sd, y_sd)
-        '''
-        The form of the dependency between u and eps_y must depend on y. This ensures that the dependency is learned by
-        the encoder, which has access to y. Therefore, make Cov(u, eps_y) positive when eps_y > 0, and negative otherwise.   
-        '''
-        collider = u * eps_y
-        neg_idxs = np.where(eps_y < 0)
-        collider[neg_idxs] *= -1
-        collider = (collider - collider.mean()) / collider.std()
-        prob = sigmoid(collider, s_shift)
-        s = rng.binomial(1, prob)
-        idxs = np.where(s == 1)[0]
-        u_all.append(u[idxs])
-        x_all.append(x[idxs])
-        y_all.append(y[idxs])
-        count += len(idxs)
-    u_all = np.concatenate(u_all)[:n_examples]
-    x_all = np.concatenate(x_all)[:n_examples]
-    y_all = np.concatenate(y_all)[:n_examples]
-    return u_all, x_all, y_all
-
-
-def make_data(seed, input_dim, n_examples, u_sd, x_sd, y_sd, s_shift, is_normalizing, is_including_u, batch_size, n_workers):
-    n_train, n_val, n_test = n_examples
+def make_data(seed, input_dim, n_train, n_val, u_sd, x_sd, y_sd, is_normalizing, is_including_u, batch_size, n_workers):
     n_trainval = n_train + n_val
     rng = np.random.RandomState(seed)
-    if s_shift is None:
-        u_trainval, x_trainval, y_trainval, _ = make_standard_data(rng, input_dim, n_trainval, u_sd, x_sd, y_sd)
-    else:
-        u_trainval, x_trainval, y_trainval = make_selection_biased_data(rng, input_dim, n_trainval, u_sd, x_sd, y_sd, s_shift)
-    u_test, x_test, y_test, _ = make_standard_data(np.random.RandomState(2 ** 32 - 1), input_dim, n_test, u_sd, x_sd, y_sd)
+    u_trainval, x_trainval, y_trainval, _ = make_raw_data(rng, input_dim, n_trainval, u_sd, x_sd, y_sd)
 
     u_train, x_train, y_train = u_trainval[:n_train], x_trainval[:n_train], y_trainval[:n_train]
     u_val, x_val, y_val = u_trainval[n_train:], x_trainval[n_train:], y_trainval[n_train:]
 
     if is_normalizing:
-        u_train, u_val, u_test = normalize(u_train, u_val, u_test)
-        x_train, x_val, x_test = normalize(x_train, x_val, x_test)
+        u_train, u_val = normalize(u_train, u_val)
+        x_train, x_val = normalize(x_train, x_val)
 
-    u_train, u_val, u_test = to_torch(u_train, u_val, u_test)
-    x_train, x_val, x_test = to_torch(x_train, x_val, x_test)
-    y_train, y_val, y_test = to_torch(y_train, y_val, y_test)
+    u_train, u_val = to_torch(u_train, u_val)
+    x_train, x_val = to_torch(x_train, x_val)
+    y_train, y_val = to_torch(y_train, y_val)
 
     if is_including_u:
         data_train = make_dataloader((u_train, x_train, y_train), batch_size, n_workers, True)
         data_val = make_dataloader((u_val, x_val, y_val), batch_size, n_workers, False)
-        data_test = make_dataloader((u_test, x_test, y_test), batch_size, n_workers, False)
     else:
         data_train = make_dataloader((x_train, y_train), batch_size, n_workers, True)
         data_val = make_dataloader((x_val, y_val), batch_size, n_workers, False)
-        data_test = make_dataloader((x_test, y_test), batch_size, n_workers, False)
-    return data_train, data_val, data_test
+    return data_train, data_val
