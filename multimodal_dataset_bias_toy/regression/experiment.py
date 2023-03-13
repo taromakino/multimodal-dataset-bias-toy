@@ -2,7 +2,7 @@ import os
 import pytorch_lightning as pl
 from argparse import ArgumentParser
 from data import make_data
-from model import Model
+from model import MultimodalRegressor, UnimodalRegressor
 from utils.file import save_file
 from utils.nn_utils import make_trainer
 
@@ -12,11 +12,16 @@ def main(config):
     save_file(config, os.path.join(config.dpath, "args.pkl"))
     os.makedirs(config.dpath, exist_ok=True)
     pl.seed_everything(seed)
-    data_train, data_val, _ = make_data(seed, config.input_dim, config.sample_size, config.split_ratios,
-        config.u_sd, config.x_sd, config.y_sd, False, True, config.batch_size, config.n_workers)
-    model = Model(seed, config.dpath, config.y_sd, config.lr)
-    trainer = make_trainer(config.dpath, seed, config.n_epochs, config.n_gpus)
-    trainer.fit(model, data_train, data_val)
+    data_train, data_val, data_test = make_data(seed, config.input_dim, config.sample_size, config.split_ratios,
+        config.u_sd, config.x_sd, config.y_sd, True, False, config.batch_size, config.n_workers)
+    multimodal_model = MultimodalRegressor(config.input_dim, config.hidden_dims, config.lr)
+    unimodal_model = UnimodalRegressor(config.input_dim, config.hidden_dims, config.lr)
+    multimodal_trainer = make_trainer(os.path.join(config.dpath, "multimodal"), seed, config.n_epochs, config.n_gpus)
+    unimodal_trainer = make_trainer(os.path.join(config.dpath, "unimodal"), seed, config.n_epochs, config.n_gpus)
+    multimodal_trainer.fit(multimodal_model, data_train, data_val)
+    multimodal_trainer.test(multimodal_model, data_test, ckpt_path="best")
+    unimodal_trainer.fit(unimodal_model, data_train, data_val)
+    unimodal_trainer.test(unimodal_model, data_test, ckpt_path="best")
 
 
 if __name__ == "__main__":
@@ -29,6 +34,7 @@ if __name__ == "__main__":
     parser.add_argument("--u_sd", type=float, default=1)
     parser.add_argument("--x_sd", type=float, default=1)
     parser.add_argument("--y_sd", type=float, default=1)
+    parser.add_argument("--hidden_dims", nargs="+", type=int, default=[128, 128])
     parser.add_argument("--lr", type=float, default=1e-3)
     parser.add_argument("--batch_size", type=int, default=128)
     parser.add_argument("--n_epochs", type=int, default=200)
