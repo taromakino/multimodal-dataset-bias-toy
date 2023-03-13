@@ -40,10 +40,10 @@ def make_raw_data(rng, input_dim, n_examples, u_sd, x_sd, y_sd):
     return u.astype("float32"), x.astype("float32"), y.astype("float32"), eps_y.astype("float32")
 
 
-def make_data(seed, input_dim, n_train, n_val, u_sd, x_sd, y_sd, is_normalizing, is_including_u, batch_size, n_workers):
-    n_trainval = n_train + n_val
+def make_data(seed, input_dim, n_trainval, train_ratio, u_sd, x_sd, y_sd, is_normalizing, is_including_u, batch_size, n_workers):
     rng = np.random.RandomState(seed)
     u_trainval, x_trainval, y_trainval, _ = make_raw_data(rng, input_dim, n_trainval, u_sd, x_sd, y_sd)
+    n_train = int(train_ratio * n_trainval)
 
     u_train, x_train, y_train = u_trainval[:n_train], x_trainval[:n_train], y_trainval[:n_train]
     u_val, x_val, y_val = u_trainval[n_train:], x_trainval[n_train:], y_trainval[n_train:]

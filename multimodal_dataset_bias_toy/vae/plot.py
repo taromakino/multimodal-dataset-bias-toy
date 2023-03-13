@@ -34,6 +34,6 @@ def main(args):
 if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument("--dpath", type=str, default="results/vae")
-    parser.add_argument("--n_seeds", type=int, default=5)
+    parser.add_argument("--n_seeds", type=int, default=10)
     parser.add_argument("--n_train_range", nargs="+", type=int, default=[25600, 6400, 1600, 400, 100])
     main(parser.parse_args())
