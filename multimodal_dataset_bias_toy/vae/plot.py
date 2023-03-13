@@ -7,8 +7,7 @@ from utils.plot import *
 
 def kl(fpath):
     df = pd.read_csv(fpath)
-    idx = df.val_loss.argmin()
-    return df.val_kl[idx]
+    return df.test_kl.iloc[-1]
 
 
 def main(args):

@@ -86,6 +86,7 @@ class IdentifiableVAE(pl.LightningModule):
     def test_step(self, batch, batch_idx):
         out = self.loss(*batch)
         self.log("test_loss", out["loss"], on_step=False, on_epoch=True)
+        self.log("test_kl", out["kl"], on_step=False, on_epoch=True)
 
 
     def configure_optimizers(self):
@@ -149,6 +150,7 @@ class VanillaVAE(pl.LightningModule):
     def test_step(self, batch, batch_idx):
         out = self.loss(*batch)
         self.log("test_loss", out["loss"], on_step=False, on_epoch=True)
+        self.log("test_kl", out["kl"], on_step=False, on_epoch=True)
 
 
     def configure_optimizers(self):
