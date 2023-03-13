@@ -23,7 +23,7 @@ def main(config):
         config.x_sd, config.y_sd, False, True, config.batch_size, config.n_workers)
     model = Model(seed, config.dpath, config.y_sd, config.lr)
     trainer = make_trainer(config.dpath, seed, config.n_epochs, config.n_gpus)
-    trainer.fit(model, data_train)
+    trainer.fit(model, data_train, data_val)
 
 
 if __name__ == "__main__":

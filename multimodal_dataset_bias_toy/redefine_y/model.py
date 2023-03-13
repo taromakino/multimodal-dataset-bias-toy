@@ -26,11 +26,16 @@ class Model(pl.LightningModule):
 
     def training_step(self, batch, batch_idx):
         loss = self.loss(*batch)
-        self.log("loss", loss, on_step=False, on_epoch=True)
+        self.log("train_loss", loss, on_step=False, on_epoch=True)
         return loss
 
 
-    def training_epoch_end(self, outputs):
+    def validation_step(self, batch, batch_idx):
+        loss = self.loss(*batch)
+        self.log("val_loss", loss, on_step=False, on_epoch=True)
+
+
+    def validation_epoch_end(self, outputs):
         self.log("alpha", self.alpha)
 
 

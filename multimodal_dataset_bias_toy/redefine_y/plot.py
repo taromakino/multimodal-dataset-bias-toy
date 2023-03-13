@@ -7,7 +7,7 @@ from utils.plot import *
 
 def abs_alpha(fpath):
     df = pd.read_csv(fpath)
-    return abs(df.alpha.iloc[df.loss.argmin()])
+    return abs(df.alpha.iloc[df.val_loss.argmin()])
 
 
 def main(args):
