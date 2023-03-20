@@ -24,7 +24,7 @@ if __name__ == "__main__":
     parser.add_argument("--dpath", type=str, default="results")
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--input_dim", type=int, default=16)
-    parser.add_argument("--sample_size", type=int, default=10000)
+    parser.add_argument("--sample_size", type=int, default=100)
     parser.add_argument("--split_ratios", nargs="+", type=float, default=[0.6, 0.2, 0.2])
     parser.add_argument("--u_sd", type=float, default=1)
     parser.add_argument("--x_sd", type=float, default=1)

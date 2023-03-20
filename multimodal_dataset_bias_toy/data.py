@@ -35,7 +35,7 @@ def make_raw_data(rng, input_dim, n_examples, u_sd, x_sd, y_sd):
     eps_x1 = rng.multivariate_normal(mean=np.zeros(input_dim), cov=make_isotropic_cov(input_dim, x_sd), size=n_examples)
     eps_y = rng.normal(loc=0, scale=y_sd, size=n_examples)
     x0 = u[:, None] * np.ones_like(eps_x0) + eps_x0
-    x1 = u[:, None] ** 2 * np.ones_like(eps_x1) + eps_x1
+    x1 = -u[:, None] * np.ones_like(eps_x1) + eps_x1
     x = np.c_[x0, x1]
     y = row_mean(x0 + x1) + eps_y
     return u.astype("float32"), x.astype("float32"), y.astype("float32"), eps_y.astype("float32")
