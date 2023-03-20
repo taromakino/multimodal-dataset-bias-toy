@@ -16,8 +16,10 @@ def main(config):
         config.u_sd, config.x_sd, config.y_sd, True, False, config.batch_size, config.n_workers)
     multimodal_model = MultimodalRegressor(config.input_dim, config.hidden_dims, config.lr)
     unimodal_model = UnimodalRegressor(config.input_dim, config.hidden_dims, config.lr)
-    multimodal_trainer = make_trainer(os.path.join(config.dpath, "multimodal"), seed, config.n_epochs, config.n_gpus)
-    unimodal_trainer = make_trainer(os.path.join(config.dpath, "unimodal"), seed, config.n_epochs, config.n_gpus)
+    multimodal_trainer = make_trainer(os.path.join(config.dpath, "multimodal"), seed, config.n_epochs, 
+        config.n_early_stop, config.n_gpus)
+    unimodal_trainer = make_trainer(os.path.join(config.dpath, "unimodal"), seed, config.n_epochs,
+        config.n_early_stop, config.n_gpus)
     multimodal_trainer.fit(multimodal_model, data_train, data_val)
     multimodal_trainer.test(multimodal_model, data_test, ckpt_path="best")
     unimodal_trainer.fit(unimodal_model, data_train, data_val)
@@ -38,6 +40,7 @@ if __name__ == "__main__":
     parser.add_argument("--lr", type=float, default=1e-3)
     parser.add_argument("--batch_size", type=int, default=128)
     parser.add_argument("--n_epochs", type=int, default=200)
+    parser.add_argument("--n_early_stop", type=int, default=50)
     parser.add_argument("--n_gpus", type=int, default=1)
     parser.add_argument("--n_workers", type=int, default=20)
     args = parser.parse_args()

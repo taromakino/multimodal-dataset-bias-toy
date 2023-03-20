@@ -15,7 +15,7 @@ def main(config):
     data_train, data_val, _ = make_data(seed, config.input_dim, config.sample_size, config.split_ratios,
         config.u_sd, config.x_sd, config.y_sd, False, True, config.batch_size, config.n_workers)
     model = Model(seed, config.dpath, config.y_sd, config.lr)
-    trainer = make_trainer(config.dpath, seed, config.n_epochs, config.n_gpus)
+    trainer = make_trainer(config.dpath, seed, config.n_epochs, config.n_early_stop, config.n_gpus)
     trainer.fit(model, data_train, data_val)
 
 
@@ -32,6 +32,7 @@ if __name__ == "__main__":
     parser.add_argument("--lr", type=float, default=1e-3)
     parser.add_argument("--batch_size", type=int, default=128)
     parser.add_argument("--n_epochs", type=int, default=200)
+    parser.add_argument("--n_early_stop", type=int, default=50)
     parser.add_argument("--n_gpus", type=int, default=1)
     parser.add_argument("--n_workers", type=int, default=20)
     args = parser.parse_args()
