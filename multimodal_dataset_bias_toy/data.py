@@ -37,7 +37,8 @@ def make_raw_data(rng, input_dim, n_examples, u_sd, x_sd, y_sd):
     x0 = u[:, None] * np.ones_like(eps_x0) + eps_x0
     x1 = -u[:, None] * np.ones_like(eps_x1) + eps_x1
     x = np.c_[x0, x1]
-    y = rng.binomial(1, sigmoid(row_mean(x0) * row_mean(x1)))
+    y = np.ones(n_examples)
+    y[np.where(row_mean(x0) * row_mean(x1) > 0)] = 0
     return u.astype("float32"), x.astype("float32"), y.astype("float32")
 
 
