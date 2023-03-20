@@ -2,7 +2,7 @@ import os
 import pytorch_lightning as pl
 from argparse import ArgumentParser
 from data import make_data
-from model import MultimodalRegressor, UnimodalRegressor
+from model import MultimodalClassifier, UnimodalClassifier
 from utils.file import save_file
 from utils.nn_utils import make_trainer
 
@@ -14,8 +14,8 @@ def main(config):
     pl.seed_everything(seed)
     data_train, data_val, data_test = make_data(seed, config.input_dim, config.sample_size, config.split_ratios,
         config.u_sd, config.x_sd, config.y_sd, True, False, config.batch_size, config.n_workers)
-    multimodal_model = MultimodalRegressor(config.input_dim, config.hidden_dims, config.lr)
-    unimodal_model = UnimodalRegressor(config.input_dim, config.hidden_dims, config.lr)
+    multimodal_model = MultimodalClassifier(config.input_dim, config.hidden_dims, config.lr)
+    unimodal_model = UnimodalClassifier(config.input_dim, config.hidden_dims, config.lr)
     multimodal_trainer = make_trainer(os.path.join(config.dpath, "multimodal"), seed, config.n_epochs, 
         config.n_early_stop, config.n_gpus)
     unimodal_trainer = make_trainer(os.path.join(config.dpath, "unimodal"), seed, config.n_epochs,

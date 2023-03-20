@@ -51,9 +51,8 @@ class VAE(pl.LightningModule):
         x = torch.repeat_interleave(x[None], repeats=self.n_samples, dim=0)
         y = torch.repeat_interleave(y[None], repeats=self.n_samples, dim=0)
         x, y, z = x.view(-1, x.shape[-1]), y.view(-1, y.shape[-1]), z.view(-1, z.shape[-1])
-        mu_y_xz = self.p_y_xz_net(x, z)[:, None]
-        var_y_xz = self.y_sd ** 2 * torch.ones_like(mu_y_xz)
-        log_p_y_xz = diag_gaussian_log_prob(y, mu_y_xz, var_y_xz, self.device)
+        logits_y_xz = self.p_y_xz_net(x, z)
+        log_p_y_xz = -F.binary_cross_entropy_with_logits(logits_y_xz, y, reduction="none").squeeze()
         assert log_p_y_xz.shape == (self.n_samples * batch_size,)
         # KL(q(z|x,y) || p(z))
         dist_c = D.Categorical(logits=self.logits_c)

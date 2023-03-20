@@ -6,7 +6,7 @@ from torch.optim import Adam
 from utils.nn_utils import MLP
 
 
-class UnimodalRegressor(pl.LightningModule):
+class UnimodalClassifier(pl.LightningModule):
     def __init__(self, input_dim, hidden_dims, lr):
         super().__init__()
         self.save_hyperparameters()
@@ -43,7 +43,7 @@ class UnimodalRegressor(pl.LightningModule):
         return Adam(self.parameters(), lr=self.lr)
 
 
-class MultimodalRegressor(pl.LightningModule):
+class MultimodalClassifier(pl.LightningModule):
     def __init__(self, input_dim, hidden_dims, lr):
         super().__init__()
         self.save_hyperparameters()
