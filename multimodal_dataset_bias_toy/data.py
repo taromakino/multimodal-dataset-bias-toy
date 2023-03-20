@@ -38,7 +38,7 @@ def make_raw_data(rng, input_dim, n_examples, u_sd, x_sd, y_sd):
     x = np.c_[x0, x1]
     y = np.ones(n_examples)
     y[np.where(row_mean(x0) * row_mean(x1) > 0)] = 0
-    return u.astype("float32"), x.astype("float32"), y
+    return u.astype("float32"), x.astype("float32"), y.astype("float32")
 
 
 def make_data(seed, input_dim, sample_size, split_ratios, u_sd, x_sd, y_sd, is_normalizing, is_including_u, batch_size, n_workers):
