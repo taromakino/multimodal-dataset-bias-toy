@@ -33,17 +33,17 @@ def make_raw_data(rng, input_dim, n_examples, u_sd, x_sd, y_sd):
     u = rng.normal(loc=0, scale=u_sd, size=n_examples)
     eps_x0 = rng.multivariate_normal(mean=np.zeros(input_dim), cov=make_isotropic_cov(input_dim, x_sd), size=n_examples)
     eps_x1 = rng.multivariate_normal(mean=np.zeros(input_dim), cov=make_isotropic_cov(input_dim, x_sd), size=n_examples)
-    eps_y = rng.normal(loc=0, scale=y_sd, size=n_examples)
     x0 = u[:, None] * np.ones_like(eps_x0) + eps_x0
     x1 = -u[:, None] * np.ones_like(eps_x1) + eps_x1
     x = np.c_[x0, x1]
-    y = row_mean(x0 + x1) + eps_y
-    return u.astype("float32"), x.astype("float32"), y.astype("float32"), eps_y.astype("float32")
+    y = np.ones(n_examples)
+    y[np.where(row_mean(x0) * row_mean(x1) > 0)] = 0
+    return u.astype("float32"), x.astype("float32"), y
 
 
 def make_data(seed, input_dim, sample_size, split_ratios, u_sd, x_sd, y_sd, is_normalizing, is_including_u, batch_size, n_workers):
     rng = np.random.RandomState(seed)
-    u, x, y, _ = make_raw_data(rng, input_dim, sample_size, u_sd, x_sd, y_sd)
+    u, x, y = make_raw_data(rng, input_dim, sample_size, u_sd, x_sd, y_sd)
     train_ratio, val_ratio, test_ratio = split_ratios
     n_train, n_val = int(train_ratio * sample_size), int(val_ratio * sample_size)
     u_train, x_train, y_train = u[:n_train], x[:n_train], y[:n_train]

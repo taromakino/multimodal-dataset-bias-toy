@@ -18,7 +18,7 @@ class MLP(nn.Module):
         self.module_list = nn.Sequential(*module_list)
 
     def forward(self, *args):
-        return torch.squeeze(self.module_list(torch.hstack(args)))
+        return self.module_list(torch.hstack(args))
 
 
 def make_trainer(dpath, seed, n_epochs, n_early_stop, n_gpus):

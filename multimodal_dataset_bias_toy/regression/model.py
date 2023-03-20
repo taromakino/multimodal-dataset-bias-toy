@@ -17,10 +17,10 @@ class UnimodalRegressor(pl.LightningModule):
 
     def forward(self, x, y):
         x0, x1 = torch.chunk(x, 2, 1)
-        pred0 = self.model0(x0)
-        pred1 = self.model1(x1)
+        pred0 = torch.sigmoid(self.model0(x0))
+        pred1 = torch.sigmoid(self.model1(x1))
         pred = (pred0 + pred1) / 2
-        return F.mse_loss(pred, y)
+        return F.binary_cross_entropy(pred, y)
 
 
     def training_step(self, batch, batch_idx):
@@ -53,7 +53,7 @@ class MultimodalRegressor(pl.LightningModule):
 
     def forward(self, x, y):
         pred = self.model(x)
-        return F.mse_loss(pred, y)
+        return F.binary_cross_entropy_with_logits(pred, y)
 
 
     def training_step(self, batch, batch_idx):
