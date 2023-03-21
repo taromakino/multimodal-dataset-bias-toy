@@ -14,7 +14,7 @@ def main(config):
     pl.seed_everything(seed)
     data_train, data_val, _ = make_data(seed, config.n_examples, config.input_dim, config.origin_offset,
         config.temperature, False, True, config.batch_size, config.n_workers)
-    model = Model(seed, config.dpath, config.y_sd, config.lr)
+    model = Model(seed, config.dpath, config.input_dim, config.temperature, config.lr)
     trainer = make_trainer(config.dpath, seed, config.n_epochs, config.early_stop_ratio, config.n_gpus)
     trainer.fit(model, data_train, data_val)
 

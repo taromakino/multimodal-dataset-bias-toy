@@ -16,7 +16,7 @@ def main(args):
     for sample_size in args.sample_size_range:
         values = []
         for seed in range(args.n_seeds):
-            values.append(abs_alpha(os.path.join(args.dpath, f"sample_size={sample_size}", f"version_{seed}", "metrics.csv")))
+            values.append(abs_alpha(os.path.join(args.dpath, f"n={sample_size}", f"version_{seed}", "metrics.csv")))
         means.append(np.mean(values))
         sds.append(np.std(values))
     ax.errorbar(range(len(means)), means, sds)

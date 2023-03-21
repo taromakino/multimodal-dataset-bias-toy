@@ -6,18 +6,21 @@ from torch.optim import Adam
 
 
 class Model(pl.LightningModule):
-    def __init__(self, seed, dpath, lr):
+    def __init__(self, seed, dpath, input_dim, temperature, lr):
         super().__init__()
         self.save_hyperparameters()
         self.seed = seed
         self.dpath = dpath
+        self.temperature = temperature
         self.lr = lr
-        self.alpha = nn.Parameter(torch.tensor(1.))
+        self.alpha = nn.Parameter(torch.ones(2 * input_dim))
 
 
     def loss(self, u, x, y):
-        # x0, x1 = torch.chunk(x, 2, 1)
-        raise NotImplementedError
+        x0, x1 = torch.chunk(x, 2, 1)
+        logits = self.temperature * (x0 * x1).sum(dim=1) + (self.alpha * u).sum(dim=1)
+        loss = F.binary_cross_entropy_with_logits(logits, y.squeeze())
+        return loss
 
 
     def training_step(self, batch, batch_idx):
@@ -32,7 +35,7 @@ class Model(pl.LightningModule):
 
 
     def validation_epoch_end(self, outputs):
-        self.log("alpha", self.alpha)
+        self.log("alpha_norm", torch.linalg.vector_norm(self.alpha))
 
 
     def configure_optimizers(self):
