@@ -32,10 +32,12 @@ def make_dataloader(data_tuple, batch_size, n_workers, is_train):
 def make_raw_data(rng, sample_size, input_dim, origin_offset, temperature):
     u_dim = 2 * input_dim
     u = rng.multivariate_normal(mean=np.zeros(u_dim), cov=np.eye(u_dim), size=sample_size)
+    eps_x0 = rng.multivariate_normal(mean=np.zeros(input_dim), cov=make_isotropic_cov(input_dim, 0.1), size=sample_size)
+    eps_x1 = rng.multivariate_normal(mean=np.zeros(input_dim), cov=make_isotropic_cov(input_dim, 0.1), size=sample_size)
     x0_idxs = rng.choice(u_dim, input_dim, replace=False)
     x1_idxs = np.setdiff1d(np.arange(u_dim), x0_idxs)
-    x0 = u[:, x0_idxs] + origin_offset
-    x1 = u[:, x1_idxs]
+    x0 = u[:, x0_idxs] + origin_offset + eps_x0
+    x1 = u[:, x1_idxs] + eps_x1
     x = np.c_[x0, x1]
     y = rng.binomial(1, sigmoid(temperature * (x0 * x1).sum(axis=1)))
     return u.astype("float32"), x.astype("float32"), y.astype("float32")
