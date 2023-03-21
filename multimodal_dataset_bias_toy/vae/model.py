@@ -19,10 +19,9 @@ class GaussianMLP(nn.Module):
 
 
 class VAE(pl.LightningModule):
-    def __init__(self, input_dim, y_sd, hidden_dims, latent_dim, n_components, n_samples, lr):
+    def __init__(self, input_dim, hidden_dims, latent_dim, n_components, n_samples, lr):
         super().__init__()
         self.save_hyperparameters()
-        self.y_sd = y_sd
         self.n_samples = n_samples
         self.lr = lr
         self.q_z_xy_net = GaussianMLP(2 * input_dim + 1, hidden_dims, latent_dim, nn.ReLU)

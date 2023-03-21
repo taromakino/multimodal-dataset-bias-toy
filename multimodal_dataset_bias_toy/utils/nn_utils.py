@@ -21,11 +21,11 @@ class MLP(nn.Module):
         return self.module_list(torch.hstack(args))
 
 
-def make_trainer(dpath, seed, n_epochs, n_early_stop, n_gpus):
+def make_trainer(dpath, seed, n_epochs, early_stop_ratio, n_gpus):
     return pl.Trainer(
         logger=CSVLogger(dpath, name="", version=seed),
         callbacks=[
-            EarlyStopping(monitor="val_loss", patience=n_early_stop),
+            EarlyStopping(monitor="val_loss", patience=int(early_stop_ratio * n_epochs)),
             ModelCheckpoint(monitor="val_loss", filename="best")],
         max_epochs=n_epochs,
         gpus=n_gpus)
