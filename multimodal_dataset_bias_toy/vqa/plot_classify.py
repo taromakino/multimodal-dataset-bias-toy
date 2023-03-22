@@ -5,9 +5,9 @@ from argparse import ArgumentParser
 from utils.plot import *
 
 
-def abs_alpha(fpath):
+def log_prob(fpath):
     df = pd.read_csv(fpath)
-    return abs(df.alpha_norm.iloc[df.val_loss.argmin()])
+    return -df.test_loss.iloc[-1]
 
 
 def main(args):
@@ -16,14 +16,20 @@ def main(args):
     for sample_size in args.sample_size_range:
         values = []
         for seed in range(args.n_seeds):
-            values.append(abs_alpha(os.path.join(args.dpath, f"n={sample_size}", f"version_{seed}", "metrics.csv")))
+            multimodal_fpath = os.path.join(args.dpath, "multimodal", f"data_seed=0,sample_size={sample_size}",
+                f"version_{seed}", "metrics.csv")
+            unimodal_fpath = os.path.join(args.dpath, "unimodal", f"data_seed=0,sample_size={sample_size}",
+                f"version_{seed}", "metrics.csv")
+            log_prob_multimodal = log_prob(multimodal_fpath)
+            log_prob_unimodal = log_prob(unimodal_fpath)
+            values.append(log_prob_multimodal - log_prob_unimodal)
         means.append(np.mean(values))
         sds.append(np.std(values))
     ax.errorbar(range(len(means)), means, sds)
     ax.set_xticks(range(len(args.sample_size_range)))
     ax.set_xticklabels(args.sample_size_range)
     ax.set_xlabel("Sample size")
-    ax.set_ylabel(r"$||\alpha||$")
+    ax.set_ylabel(r"$\Delta \log p(y \mid x, x')$")
     fig.tight_layout()
     os.makedirs("fig", exist_ok=True)
     plt.savefig(os.path.join("fig", "fig.pdf"), bbox_inches="tight")
@@ -32,6 +38,6 @@ def main(args):
 if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument("--dpath", type=str, required=True)
-    parser.add_argument("--n_seeds", type=int, default=10)
-    parser.add_argument("--sample_size_range", nargs="+", type=int, default=[25600, 6400, 1600, 400, 100])
+    parser.add_argument("--n_seeds", type=int, default=5)
+    parser.add_argument("--sample_size_range", nargs="+", type=int, default=[128000, 32000, 8000, 2000, 500])
     main(parser.parse_args())

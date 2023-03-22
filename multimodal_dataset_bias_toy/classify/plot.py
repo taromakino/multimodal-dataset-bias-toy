@@ -20,7 +20,7 @@ def main(args):
             unimodal_fpath = os.path.join(args.dpath, f"n={sample_size}", "unimodal", f"version_{seed}", "metrics.csv")
             log_prob_multimodal = log_prob(multimodal_fpath)
             log_prob_unimodal = log_prob(unimodal_fpath)
-            values.append(log_prob_unimodal - log_prob_multimodal)
+            values.append(log_prob_multimodal - log_prob_unimodal)
         means.append(np.mean(values))
         sds.append(np.std(values))
     ax.errorbar(range(len(means)), means, sds)
@@ -35,7 +35,7 @@ def main(args):
 
 if __name__ == "__main__":
     parser = ArgumentParser()
-    parser.add_argument("--dpath", type=str, default="results/classify")
+    parser.add_argument("--dpath", type=str, required=True)
     parser.add_argument("--n_seeds", type=int, default=10)
     parser.add_argument("--sample_size_range", nargs="+", type=int, default=[25600, 6400, 1600, 400, 100])
     main(parser.parse_args())

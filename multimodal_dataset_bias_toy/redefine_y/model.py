@@ -18,7 +18,7 @@ class Model(pl.LightningModule):
 
     def loss(self, u, x, y):
         x0, x1 = torch.chunk(x, 2, 1)
-        logits = self.temperature * (x0 * x1).sum(dim=1) + (self.alpha * u).sum(dim=1)
+        logits = self.temperature * ((x0 * x1).sum(dim=1) + (self.alpha * u).sum(dim=1))
         loss = F.binary_cross_entropy_with_logits(logits, y.squeeze())
         return loss
 

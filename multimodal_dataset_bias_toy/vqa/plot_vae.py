@@ -34,7 +34,7 @@ def main(args):
 
 if __name__ == "__main__":
     parser = ArgumentParser()
-    parser.add_argument("--dpath", type=str, default="results/vqa")
+    parser.add_argument("--dpath", type=str, required=True)
     parser.add_argument("--n_seeds", type=int, default=5)
     parser.add_argument("--subset_ratio_range", nargs="+", type=float, default=[0.32, 0.16, 0.08, 0.01, 0.005])
     main(parser.parse_args())
