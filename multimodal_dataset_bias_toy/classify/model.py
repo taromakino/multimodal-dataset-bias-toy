@@ -13,15 +13,14 @@ class UnimodalClassifier(pl.LightningModule):
         self.lr = lr
         self.model0 = MLP(input_dim, hidden_dims, 1, nn.ReLU)
         self.model1 = MLP(input_dim, hidden_dims, 1, nn.ReLU)
-        self.output = MLP(2, [], 1, nn.ReLU)
 
 
     def forward(self, x, y):
         x0, x1 = torch.chunk(x, 2, 1)
-        pred0 = self.model0(x0)
-        pred1 = self.model1(x1)
-        pred = self.output(pred0, pred1)
-        return F.binary_cross_entropy_with_logits(pred, y)
+        pred0 = torch.sigmoid(self.model0(x0))
+        pred1 = torch.sigmoid(self.model1(x1))
+        pred = (pred0 + pred1) / 2
+        return F.binary_cross_entropy(pred, y)
 
 
     def training_step(self, batch, batch_idx):
