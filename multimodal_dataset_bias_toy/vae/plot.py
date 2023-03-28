@@ -11,7 +11,7 @@ def kl(fpath):
 
 
 def main(args):
-    fig, ax = plt.subplots(1, 1, figsize=(5, 3))
+    fig, ax = plt.subplots(1, 1, figsize=(6, 3))
     means, sds = [], []
     for sample_size in args.sample_size_range:
         values = []

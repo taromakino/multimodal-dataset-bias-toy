@@ -89,3 +89,65 @@ class VAE(pl.LightningModule):
 
     def configure_optimizers(self):
         return Adam(self.parameters(), lr=self.lr)
+
+
+class VanillaVAE(pl.LightningModule):
+    def __init__(self, input_dim, hidden_dims, latent_dim, n_samples, lr):
+        super().__init__()
+        self.save_hyperparameters()
+        self.n_samples = n_samples
+        self.lr = lr
+        self.q_z_xy_net = GaussianMLP(2 * input_dim + 1, hidden_dims, latent_dim, nn.ReLU)
+        self.p_y_xz_net = MLP(2 * input_dim + latent_dim, hidden_dims, 1, nn.ReLU)
+
+
+    def sample_z(self, mu, var):
+        sd = var.sqrt()
+        eps = torch.randn(self.n_samples, *sd.shape).to(self.device)
+        return mu + eps * sd
+
+
+    def loss(self, x, y):
+        batch_size = len(x)  # For assertions
+        # z ~ q(z|x,y)
+        mu_z_xy, var_z_xy = self.q_z_xy_net(x, y)
+        z = self.sample_z(mu_z_xy, var_z_xy)
+        log_q_z_xy = diag_gaussian_log_prob(z, mu_z_xy, var_z_xy, self.device).view(-1)
+        assert log_q_z_xy.shape == (self.n_samples * batch_size,)
+        # E_q(z|x,y)[log p(y|x,z)]
+        x = torch.repeat_interleave(x[None], repeats=self.n_samples, dim=0)
+        y = torch.repeat_interleave(y[None], repeats=self.n_samples, dim=0)
+        x, y, z = x.view(-1, x.shape[-1]), y.view(-1, y.shape[-1]), z.view(-1, z.shape[-1])
+        logits_y_xz = self.p_y_xz_net(x, z)
+        log_p_y_xz = -F.binary_cross_entropy_with_logits(logits_y_xz, y, reduction="none").squeeze()
+        assert log_p_y_xz.shape == (self.n_samples * batch_size,)
+        # KL(q(z|x,y) || p(z))
+        kl = (-0.5 * torch.sum(1 + var_z_xy.log() - mu_z_xy.pow(2) - var_z_xy, dim=1)).mean()
+        elbo = log_p_y_xz.mean() - kl
+        return {
+            "loss": -elbo,
+            "kl": kl
+        }
+
+
+    def training_step(self, batch, batch_idx):
+        out = self.loss(*batch)
+        self.log("train_loss", out["loss"], on_step=False, on_epoch=True)
+        self.log("train_kl", out["kl"], on_step=False, on_epoch=True)
+        return out["loss"]
+
+
+    def validation_step(self, batch, batch_idx):
+        out = self.loss(*batch)
+        self.log("val_loss", out["loss"], on_step=False, on_epoch=True)
+        self.log("val_kl", out["kl"], on_step=False, on_epoch=True)
+
+
+    def test_step(self, batch, batch_idx):
+        out = self.loss(*batch)
+        self.log("test_loss", out["loss"], on_step=False, on_epoch=True)
+        self.log("test_kl", out["kl"], on_step=False, on_epoch=True)
+
+
+    def configure_optimizers(self):
+        return Adam(self.parameters(), lr=self.lr)
