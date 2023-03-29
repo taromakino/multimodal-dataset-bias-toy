@@ -3,13 +3,12 @@ from data import make_raw_data
 from utils.plot import *
 
 
-rng = np.random.RandomState(1)
+rng = np.random.RandomState(0)
 input_dim = 1
 sample_size = 1600
-origin_offset = 1.5
 temperature = 100
 
-u, x, y = make_raw_data(rng, sample_size, input_dim, origin_offset, temperature)
+u, x, y = make_raw_data(rng, sample_size, input_dim, temperature)
 neg_idxs = np.where(y == 0)
 pos_idxs = np.where(y == 1)
 

@@ -12,8 +12,8 @@ def main(config):
     save_file(config, os.path.join(config.dpath, "args.pkl"))
     os.makedirs(config.dpath, exist_ok=True)
     pl.seed_everything(seed)
-    data_train, data_val, data_test = make_data(seed, config.n_examples, config.input_dim,
-        config.origin_offset, config.temperature, True, False, config.batch_size, config.n_workers)
+    data_train, data_val, data_test = make_data(seed, config.n_examples, config.input_dim, config.temperature,
+        True, False, config.batch_size, config.n_workers)
     if config.is_vanilla:
         model = VanillaVAE(config.input_dim, config.hidden_dims, config.latent_dim, config.n_samples, config.lr)
     else:
@@ -29,7 +29,6 @@ if __name__ == "__main__":
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--n_examples", nargs="+", type=int, default=[60, 20, 20])
     parser.add_argument("--input_dim", type=int, default=16)
-    parser.add_argument("--origin_offset", type=float, default=1)
     parser.add_argument("--temperature", type=float, default=100)
     parser.add_argument("--is_vanilla", action="store_true")
     parser.add_argument("--hidden_dims", nargs="+", type=int, default=[128, 128])
