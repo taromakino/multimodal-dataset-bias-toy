@@ -11,12 +11,12 @@ def kl(fpath):
 
 
 def main(args):
-    fig, ax = plt.subplots(1, 1, figsize=(5, 3))
+    fig, ax = plt.subplots(1, 1, figsize=(6, 3))
     means, sds = [], []
     for sample_size in args.sample_size_range:
         values = []
         for seed in range(args.n_seeds):
-            fpath = os.path.join(args.dpath, f"sample_size={sample_size}", f"version_{seed}", "metrics.csv")
+            fpath = os.path.join(args.dpath, f"n={sample_size}", f"version_{seed}", "metrics.csv")
             values.append(kl(fpath))
         means.append(np.mean(values))
         sds.append(np.std(values))
@@ -32,7 +32,7 @@ def main(args):
 
 if __name__ == "__main__":
     parser = ArgumentParser()
-    parser.add_argument("--dpath", type=str, default="results/vae")
+    parser.add_argument("--dpath", type=str, required=True)
     parser.add_argument("--n_seeds", type=int, default=10)
     parser.add_argument("--sample_size_range", nargs="+", type=int, default=[25600, 6400, 1600, 400, 100])
     main(parser.parse_args())

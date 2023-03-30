@@ -1,27 +1,26 @@
 import pytorch_lightning as pl
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from torch.optim import Adam
-from utils.stats import diag_gaussian_log_prob
 
 
 class Model(pl.LightningModule):
-    def __init__(self, seed, dpath, y_sd, lr):
+    def __init__(self, seed, dpath, input_dim, temperature, lr):
         super().__init__()
         self.save_hyperparameters()
         self.seed = seed
         self.dpath = dpath
-        self.y_sd = y_sd
+        self.temperature = temperature
         self.lr = lr
-        self.alpha = nn.Parameter(torch.tensor(1.))
+        self.alpha = nn.Parameter(torch.ones(2 * input_dim))
 
 
     def loss(self, u, x, y):
         x0, x1 = torch.chunk(x, 2, 1)
-        mu_y_ux = (x0.mean(dim=1) + x1.mean(dim=1))[:, None] + self.alpha * u
-        var_y_ux = self.y_sd ** 2 * torch.ones_like(mu_y_ux)
-        log_p_y_ux = diag_gaussian_log_prob(y, mu_y_ux, var_y_ux, self.device).mean()
-        return -log_p_y_ux
+        logits = self.temperature * ((x0 * x1).sum(dim=1) + (self.alpha * u).sum(dim=1))
+        loss = F.binary_cross_entropy_with_logits(logits, y.squeeze())
+        return loss
 
 
     def training_step(self, batch, batch_idx):
@@ -36,7 +35,7 @@ class Model(pl.LightningModule):
 
 
     def validation_epoch_end(self, outputs):
-        self.log("alpha", self.alpha)
+        self.log("alpha_norm", torch.linalg.vector_norm(self.alpha))
 
 
     def configure_optimizers(self):

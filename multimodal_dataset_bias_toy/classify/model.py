@@ -6,7 +6,7 @@ from torch.optim import Adam
 from utils.nn_utils import MLP
 
 
-class UnimodalRegressor(pl.LightningModule):
+class UnimodalClassifier(pl.LightningModule):
     def __init__(self, input_dim, hidden_dims, lr):
         super().__init__()
         self.save_hyperparameters()
@@ -17,10 +17,10 @@ class UnimodalRegressor(pl.LightningModule):
 
     def forward(self, x, y):
         x0, x1 = torch.chunk(x, 2, 1)
-        pred0 = self.model0(x0)
-        pred1 = self.model1(x1)
+        pred0 = torch.sigmoid(self.model0(x0))
+        pred1 = torch.sigmoid(self.model1(x1))
         pred = (pred0 + pred1) / 2
-        return F.mse_loss(pred, y)
+        return F.binary_cross_entropy(pred, y)
 
 
     def training_step(self, batch, batch_idx):
@@ -43,7 +43,7 @@ class UnimodalRegressor(pl.LightningModule):
         return Adam(self.parameters(), lr=self.lr)
 
 
-class MultimodalRegressor(pl.LightningModule):
+class MultimodalClassifier(pl.LightningModule):
     def __init__(self, input_dim, hidden_dims, lr):
         super().__init__()
         self.save_hyperparameters()
@@ -53,7 +53,7 @@ class MultimodalRegressor(pl.LightningModule):
 
     def forward(self, x, y):
         pred = self.model(x)
-        return F.mse_loss(pred, y)
+        return F.binary_cross_entropy_with_logits(pred, y)
 
 
     def training_step(self, batch, batch_idx):
