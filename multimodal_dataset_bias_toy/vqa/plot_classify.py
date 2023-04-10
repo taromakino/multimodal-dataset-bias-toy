@@ -11,7 +11,7 @@ def log_prob(fpath):
 
 
 def main(args):
-    fig, ax = plt.subplots(1, 1, figsize=(6, 3.5))
+    fig, ax = plt.subplots(1, 1, figsize=(6, 4))
     values = []
     for dataset_size in args.dataset_size_range:
         values_row = []
@@ -25,12 +25,13 @@ def main(args):
             values_row.append(log_prob_multimodal - log_prob_unimodal)
         values.append(values_row)
     values = pd.DataFrame(np.array(values).T).melt()
-    sns.lineplot(data=values, x="variable", y="value", errorbar="sd", ax=ax)
+    sns.lineplot(data=values, x="variable", y="value", errorbar="sd", err_style="bars", ax=ax)
     ax.set_xticks(range(len(args.dataset_size_range)))
     ax.set_xticklabels(args.dataset_size_range)
     ax.set_xlabel("Dataset size")
     ax.set_ylabel(r"$\Delta \log p(y \mid x, x')$")
     fig.tight_layout()
+    fig.subplots_adjust(bottom=0.35)
     os.makedirs("fig", exist_ok=True)
     plt.savefig(os.path.join("fig", "vqa,comparison.pdf"))
 
