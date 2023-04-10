@@ -1,7 +1,8 @@
 import matplotlib.pyplot as plt
+import seaborn as sns
 
 
-plt.rcParams.update({'font.size': 16})
+sns.set_context(context="paper", font_scale=2)
 
 
 def next_color(ax):

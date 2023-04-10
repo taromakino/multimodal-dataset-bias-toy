@@ -5,7 +5,7 @@ from utils.plot import *
 
 rng = np.random.RandomState(1)
 input_dim = 1
-sample_size = 1600
+sample_size = 100
 origin_offset = 1.5
 temperature = 100
 
@@ -25,4 +25,4 @@ ax.axis("equal")
 handles, labels = ax.get_legend_handles_labels()
 fig.legend(handles, labels, loc='lower center', ncol=len(handles), bbox_to_anchor=[0.5, 0])
 fig.tight_layout()
-fig.subplots_adjust(bottom=0.3)
+fig.subplots_adjust(bottom=0.35)

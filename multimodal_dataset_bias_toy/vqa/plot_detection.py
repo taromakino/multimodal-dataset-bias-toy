@@ -12,16 +12,16 @@ def kl(fpath):
 
 
 def main(args):
-    fig, ax = plt.subplots(1, 1, figsize=(6, 3))
-    means, sds = [], []
+    fig, ax = plt.subplots(1, 1, figsize=(6, 3.5))
+    values = []
     for dataset_size in args.dataset_size_range:
-        values = []
+        values_row = []
         for seed in range(args.n_seeds):
-            fpath = os.path.join(args.dpath, f"data_seed=0,n={dataset_size}", f"version_{seed}", "metrics.csv")
-            values.append(kl(fpath))
-        means.append(np.mean(values))
-        sds.append(np.std(values))
-    ax.errorbar(range(len(means)), means, sds)
+            fpath = os.path.join(args.dpath, "vae", f"data_seed=0,n={dataset_size}", f"version_{seed}", "metrics.csv")
+            values_row.append(kl(fpath))
+        values.append(values_row)
+    values = pd.DataFrame(np.array(values).T).melt()
+    sns.lineplot(data=values, x="variable", y="value", errorbar="sd", ax=ax)
     ax.set_xticks(range(len(args.dataset_size_range)))
     ax.set_xticklabels(args.dataset_size_range)
     ax.set_xlabel("Dataset size")
