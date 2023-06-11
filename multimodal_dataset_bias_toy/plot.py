@@ -1,4 +1,5 @@
 import numpy as np
+import os
 from data import make_raw_data
 from utils.plot import *
 
@@ -7,9 +8,10 @@ for name, sample_size in zip(["small", "large"], [100, 1600]):
     rng = np.random.RandomState(1)
     input_dim = 1
     origin_offset = 1.5
+    x_sd = 0.1
     temperature = 100
 
-    u, x, y = make_raw_data(rng, sample_size, input_dim, origin_offset, temperature)
+    u, x, y = make_raw_data(rng, sample_size, input_dim, origin_offset, x_sd, temperature)
     neg_idxs = np.where(y == 0)
     pos_idxs = np.where(y == 1)
 
@@ -27,4 +29,5 @@ for name, sample_size in zip(["small", "large"], [100, 1600]):
     fig.legend(handles, labels, loc='lower center', ncol=len(handles), bbox_to_anchor=[0.5, 0])
     fig.tight_layout()
     fig.subplots_adjust(bottom=0.35)
+    os.makedirs("fig", exist_ok=True)
     plt.savefig(f"fig/toy_problem,{name}_dataset.pdf")
