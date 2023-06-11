@@ -98,7 +98,7 @@ class VanillaVAE(pl.LightningModule):
         self.n_samples = n_samples
         self.lr = lr
         self.q_z_xy_net = GaussianMLP(2 * input_dim + 1, hidden_dims, latent_dim, nn.ReLU)
-        self.p_y_xz_net = MLP(2 * input_dim + latent_dim, hidden_dims, 1, nn.ReLU)
+        self.p_y_xz_net = MLP(2 * input_dim + latent_dim, hidden_dims, 1, nn.Sigmoid)
 
 
     def sample_z(self, mu, var):

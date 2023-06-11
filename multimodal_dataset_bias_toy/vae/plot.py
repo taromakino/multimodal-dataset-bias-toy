@@ -23,7 +23,8 @@ def plot(ax, args, input_dim, is_identifiable, x_offset):
     values = pd.DataFrame(np.array(values).T).melt()
     values.variable += x_offset
     label = "Identifiable" if is_identifiable else "Unidentifiable"
-    sns.lineplot(data=values, x="variable", y="value", errorbar="sd", err_style="bars", ax=ax, label=label, legend=False)
+    sns.lineplot(data=values, x="variable", y="value", errorbar="sd", err_style="bars", err_kws={"capsize": 4},
+        ax=ax, label=label, legend=False)
     ax.set_xticks(range(len(args.dataset_size_range)))
     ax.set_xticklabels(args.dataset_size_range)
     ax.set_xlabel("Dataset size")
@@ -34,6 +35,7 @@ def main(args):
     fig, ax = plt.subplots(1, 1, figsize=(6, 4))
     plot(ax, args, args.input_dim, True, 0)
     plot(ax, args, args.input_dim, False, 0.05)
+    ax.grid(alpha=0.5, linewidth=0.5)
     handles, labels = ax.get_legend_handles_labels()
     fig.legend(handles, labels, loc='lower center', ncol=len(handles), bbox_to_anchor=[0.5, 0])
     fig.tight_layout()
